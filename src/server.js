@@ -525,6 +525,11 @@ api.get('/codes', (_req, res) => {
 
 app.use('/api', api);
 
+// Public liveness probe — used by hosting health checks and mobile bookmarklets.
+app.get('/healthz', (_req, res) => {
+  res.json({ ok: true, app: 'x-document-manager', startedAt: startedAt.toISOString() });
+});
+
 /* ───────────────────────────── static UI ───────────────────────────── */
 
 const publicDir = path.join(ROOT, 'public');

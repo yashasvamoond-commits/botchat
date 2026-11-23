@@ -229,3 +229,20 @@ stored in SQLite (`ecourts_cases`) and the raw file is kept in `data/ecourts/`. 
 restarts, so the file never has to be sent again. Ask `ecourts`, `next hearing`, or send a
 CNR number to get a case back. The dashboard shows the same data under **Setup → eCourts memory**,
 and `GET /api/ecourts` returns it as JSON.
+
+## A permanent link (recommended for daily phone use)
+
+The preview URL inside a development sandbox changes whenever the sandbox is
+recycled. For a link you can keep on your phone's home screen, deploy this repo
+once — it is a single Node service with one persistent volume:
+
+| Where | How |
+| --- | --- |
+| **Render** | New → Blueprint → pick this repo. `render.yaml` creates the service, a 5 GB disk at `/data` and a generated `DASHBOARD_TOKEN`. |
+| **Railway** | New Project → Deploy from repo (Dockerfile is detected). Add a volume mounted at `/data`, and set `DATA_DIR=/data`, `DASHBOARD_TOKEN=…`. |
+| **Any VPS** | `docker build -t xdm . && docker run -d -p 80:3000 -v /srv/xdm:/data -e DASHBOARD_TOKEN=ABC-DEF-GHI --restart unless-stopped --name xdm xdm` |
+
+Then open `https://<your-domain>/?token=<DASHBOARD_TOKEN>` on the iPhone and use
+**Share → Add to Home Screen**. Documents, the SQLite database and the eCourts
+memory all live inside `DATA_DIR`, so they survive redeploys as long as the
+volume is kept. `GET /healthz` answers `{"ok":true}` for uptime checks.

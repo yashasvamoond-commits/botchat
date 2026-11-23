@@ -1,0 +1,23 @@
+# One-click permanent deployment on Render (free plan can be upgraded later).
+# The disk keeps documents, the database and the eCourts memory across deploys.
+services:
+  - type: web
+    name: x-document-manager
+    runtime: docker
+    plan: starter
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: DATA_DIR
+        value: /data
+      - key: OWNER_NAME
+        sync: false
+      - key: DASHBOARD_TOKEN
+        generateValue: true
+      # Optional AI upgrade — leave unset to stay fully local.
+      - key: OPENAI_API_KEY
+        sync: false
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 5
