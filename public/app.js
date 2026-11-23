@@ -12,11 +12,171 @@ const state = {
   pendingFile: null,
 };
 
+
+/* ─────────────────────────── languages ─────────────────────────── */
+
+const I18N = {
+  en: {
+    'app.title': 'X Document Manager',
+    'gate.sub': 'Private legal document library',
+    'gate.label': 'Access code',
+    'gate.button': 'Unlock my files',
+    'nav.chat': 'Chat', 'nav.library': 'Library', 'nav.cases': 'Cases',
+    'nav.dates': 'Dates', 'nav.draft': 'Draft', 'nav.settings': 'Setup',
+    'chat.sub': 'Send a document. Ask for it later.',
+    'chat.clear': 'Clear view',
+    'chat.note': 'This is your WhatsApp assistant. Send a PDF, Word file or photo of a paper — ask for it by name later. Files never leave this server. Hindi and Urdu papers are read too.',
+    'chat.placeholder': 'Ask for a document, or type help…',
+    'library.title': 'Library',
+    'library.add': '＋ Add documents',
+    'library.export': 'Export list',
+    'library.search': 'Search: rent agreement Sharma, notices 2023, cheque bounce…',
+    'cases.title': 'Cases',
+    'cases.sub': 'Every document stays in the right file.',
+    'cases.new': '＋ New case',
+    'dates.title': 'Dates & reminders',
+    'dates.sub': 'Hearings, limitation dates and follow-ups.',
+    'dates.add': 'Add a date',
+    'dates.what': 'What is it?', 'dates.when': 'Date', 'dates.remind': 'Remind me (days before)',
+    'dates.case': 'Linked case', 'dates.note': 'Note (optional)', 'dates.save': 'Save date',
+    'draft.title': 'Draft a document',
+    'draft.sub': 'Starting points in Indian practice style. Always review before use.',
+    'draft.what': 'What do you need?', 'draft.facts': 'Tell me the facts in one line',
+    'draft.go': 'Generate draft',
+    'settings.title': 'Setup & housekeeping',
+    'settings.sub': 'Everything runs on your own machine.',
+    'toast.lang': 'Language set',
+  },
+  hi: {
+    'app.title': 'एक्स डॉक्यूमेंट मैनेजर',
+    'gate.sub': 'निजी कानूनी दस्तावेज़ लाइब्रेरी',
+    'gate.label': 'एक्सेस कोड',
+    'gate.button': 'मेरी फाइलें खोलें',
+    'nav.chat': 'चैट', 'nav.library': 'लाइब्रेरी', 'nav.cases': 'केस',
+    'nav.dates': 'तारीखें', 'nav.draft': 'मसौदा', 'nav.settings': 'सेटअप',
+    'chat.sub': 'दस्तावेज़ भेजें, बाद में माँगें।',
+    'chat.clear': 'दृश्य साफ़ करें',
+    'chat.note': 'यह आपका व्हाट्सएप सहायक है। PDF, Word फाइल या काग़ज़ की फोटो भेजें — बाद में नाम से माँगें। फाइलें इसी सर्वर पर रहती हैं। हिंदी और उर्दू दस्तावेज़ भी पढ़े जाते हैं।',
+    'chat.placeholder': 'दस्तावेज़ माँगें, या help लिखें…',
+    'library.title': 'लाइब्रेरी',
+    'library.add': '＋ दस्तावेज़ जोड़ें',
+    'library.export': 'सूची निर्यात करें',
+    'library.search': 'खोजें: किराया अनुबंध शर्मा, 2023 के नोटिस, चेक बाउंस…',
+    'cases.title': 'केस',
+    'cases.sub': 'हर दस्तावेज़ सही फाइल में रहता है।',
+    'cases.new': '＋ नया केस',
+    'dates.title': 'तारीखें और याददेहानी',
+    'dates.sub': 'सुनवाई, परिसीमा तिथियाँ और फॉलो-अप।',
+    'dates.add': 'तारीख जोड़ें',
+    'dates.what': 'क्या है?', 'dates.when': 'तारीख', 'dates.remind': 'कितने दिन पहले याद दिलाएँ',
+    'dates.case': 'जुड़ा हुआ केस', 'dates.note': 'टिप्पणी (वैकल्पिक)', 'dates.save': 'तारीख सहेजें',
+    'draft.title': 'दस्तावेज़ का मसौदा',
+    'draft.sub': 'भारतीय प्रैक्टिस शैली में शुरुआती मसौदे। उपयोग से पहले जाँचें।',
+    'draft.what': 'आपको क्या चाहिए?', 'draft.facts': 'तथ्य एक पंक्ति में बताएं',
+    'draft.go': 'मसौदा बनाएं',
+    'settings.title': 'सेटअप और रखरखाव',
+    'settings.sub': 'सब कुछ आपकी अपनी मशीन पर चलता है।',
+    'toast.lang': 'भाषा बदली गई',
+  },
+  ur: {
+    'app.title': 'ایکس ڈاکیومنٹ مینیجر',
+    'gate.sub': 'نجی قانونی دستاویزات کی لائبریری',
+    'gate.label': 'رسائی کوڈ',
+    'gate.button': 'میری فائلیں کھولیں',
+    'nav.chat': 'چیٹ', 'nav.library': 'لائبریری', 'nav.cases': 'کیسز',
+    'nav.dates': 'تاریخیں', 'nav.draft': 'مسودہ', 'nav.settings': 'سیٹ اپ',
+    'chat.sub': 'دستاویز بھیجیں، بعد میں منگوائیں۔',
+    'chat.clear': 'منظر صاف کریں',
+    'chat.note': 'یہ آپ کا واٹس ایپ معاون ہے۔ PDF، ورڈ فائل یا کاغذ کی تصویر بھیجیں — بعد میں نام سے منگوائیں۔ فائلیں اسی سرور پر رہتی ہیں۔ ہندی اور اردو دستاویزات بھی پڑھی جاتی ہیں۔',
+    'chat.placeholder': 'دستاویز منگوائیں، یا help لکھیں…',
+    'library.title': 'لائبریری',
+    'library.add': '＋ دستاویزات شامل کریں',
+    'library.export': 'فہرست محفوظ کریں',
+    'library.search': 'تلاش: کرایہ نامہ شرما، 2023 کے نوٹس، چیک باؤنس…',
+    'cases.title': 'کیسز',
+    'cases.sub': 'ہر دستاویز صحیح فائل میں رہتی ہے۔',
+    'cases.new': '＋ نیا کیس',
+    'dates.title': 'تاریخیں اور یاد دہانی',
+    'dates.sub': 'سماعتیں، حدود کی تاریخیں اور فالو اپ۔',
+    'dates.add': 'تاریخ شامل کریں',
+    'dates.what': 'کیا ہے؟', 'dates.when': 'تاریخ', 'dates.remind': 'کتنے دن پہلے یاد دلائیں',
+    'dates.case': 'منسلک کیس', 'dates.note': 'نوٹ (اختیاری)', 'dates.save': 'تاریخ محفوظ کریں',
+    'draft.title': 'دستاویز کا مسودہ',
+    'draft.sub': 'بھارتی طرزِ عمل کے ابتدائی مسودے۔ استعمال سے پہلے جائزہ لیں۔',
+    'draft.what': 'آپ کو کیا چاہیے؟', 'draft.facts': 'حقائق ایک سطر میں بتائیں',
+    'draft.go': 'مسودہ بنائیں',
+    'settings.title': 'سیٹ اپ اور دیکھ بھال',
+    'settings.sub': 'سب کچھ آپ کی اپنی مشین پر چلتا ہے۔',
+    'toast.lang': 'زبان تبدیل ہو گئی',
+  },
+};
+const LANG_KEY = 'xdm.lang';
+function currentLang() {
+  const saved = localStorage.getItem(LANG_KEY);
+  return saved && I18N[saved] ? saved : 'en';
+}
+function applyLang(lang, { quiet = false } = {}) {
+  const dict = I18N[lang] || I18N.en;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr';
+  for (const el of $$('[data-i18n]')) {
+    const key = el.dataset.i18n;
+    if (dict[key]) el.innerHTML = dict[key];
+  }
+  for (const el of $$('[data-i18n-ph]')) {
+    const key = el.dataset.i18nPh;
+    if (dict[key]) el.placeholder = dict[key];
+  }
+  for (const btn of $$('#lang-switch button')) btn.classList.toggle('on', btn.dataset.lang === lang);
+  localStorage.setItem(LANG_KEY, lang);
+  if (!quiet) toast(dict['toast.lang']);
+}
+function wireLangSwitch() {
+  const box = $('#lang-switch');
+  if (!box) return;
+  box.addEventListener('click', (event) => {
+    const btn = event.target.closest('button[data-lang]');
+    if (btn) applyLang(btn.dataset.lang);
+  });
+}
+
+applyLang(currentLang(), { quiet: true });
+wireLangSwitch();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => { /* offline shell is optional */ });
+  });
+}
+
 /* ─────────────────────────── helpers ─────────────────────────── */
 
-async function api(path, options = {}) {
+const TOKEN_KEY = 'xdm.token';
+
+/**
+ * Sign in again with the remembered access code when the cookie is gone.
+ * iOS/Safari drops cookies inside embedded views, so the token is our fallback.
+ */
+async function retryLogin() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return false;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function api(path, options = {}, retried = false) {
   const res = await fetch(path, { credentials: 'same-origin', ...options });
   if (res.status === 401) {
+    if (!retried && path !== '/api/login' && await retryLogin()) return api(path, options, true);
     showGate();
     throw new Error('Please unlock again.');
   }
@@ -123,9 +283,13 @@ function showGate() {
 async function boot() {
   try {
     const session = await api('/api/session');
-    if (!session.ok) return showGate();
+    if (!session.ok) {
+      if (await retryLogin()) return enterApp();
+      return showGate();
+    }
     await enterApp();
   } catch {
+    if (await retryLogin()) return enterApp();
     showGate();
   }
 }
@@ -134,6 +298,7 @@ $('#gate-btn').onclick = async () => {
   const token = $('#token').value.trim();
   $('#gate-error').textContent = '';
   try {
+    localStorage.setItem(TOKEN_KEY, token);
     await api('/api/login', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -155,6 +320,8 @@ async function enterApp() {
   await loadDeadlines();
   await loadTemplates();
   if (state.tab === 'library') await loadDocs();
+  const wanted = new URLSearchParams(location.search).get('tab');
+  if (wanted && $(`#tab-${wanted}`)) switchTab(wanted);
 }
 
 /* ─────────────────────────── tabs ─────────────────────────── */
@@ -510,6 +677,10 @@ $('#lib-file').onchange = async (event) => {
     try {
       toast(`Reading ${file.name}…`);
       const data = await api('/api/upload', { method: 'POST', body: form });
+      if (data.ecourts) {
+        toast(`⚖️ eCourts remembered — ${data.cases.length} case(s)`);
+        continue;
+      }
       toast(`${data.document.id} filed · ${data.document.typeLabel}`);
     } catch (err) {
       toast(`Could not add ${file.name}: ${err.message}`);
@@ -707,6 +878,42 @@ $('#draft-go').onclick = async () => {
 
 /* ─────────────────────────── settings ─────────────────────────── */
 
+async function loadEcourtsCard() {
+  const box = $('#ecourts-box');
+  if (!box) return;
+  try {
+    const data = await api('/api/ecourts');
+    const heard = data.summary.total;
+    box.innerHTML = `
+      <div class="stat-line"><span>Cases remembered</span><b>${heard}</b></div>
+      <div class="stat-line"><span>With a next date</span><b>${data.summary.withHearing}</b></div>
+      <div class="stat-line"><span>Next hearing</span><b>${data.summary.nextDate ? fmtDate(data.summary.nextDate) : '—'}</b></div>
+      ${data.upcoming.length ? `<div class="ec-list">${data.upcoming.slice(0, 5).map((c) => `
+        <div class="ec-row"><b>${escapeHtml(c.title || c.case_number || c.cnr)}</b>
+        <small>${escapeHtml(c.next_hearing || '')}${c.court ? ` · ${escapeHtml(c.court)}` : ''}</small></div>`).join('')}</div>` : ''}`;
+    const input = $('#ecourts-file');
+    if (input) {
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+        const form = new FormData();
+        form.append('file', file);
+        try {
+          const res = await api('/api/upload', { method: 'POST', body: form });
+          toast(res.ecourts ? `⚖️ ${res.cases.length} eCourts case(s) remembered` : 'File added');
+          loadEcourtsCard();
+          await refreshOverview();
+        } catch (err) {
+          toast(err.message);
+        }
+        input.value = '';
+      };
+    }
+  } catch {
+    box.innerHTML = '<p class="small muted">Could not read the eCourts store right now.</p>';
+  }
+}
+
 function renderSettings() {
   const body = $('#settings-body');
   if (!body || !state.overview) return;
@@ -723,6 +930,13 @@ function renderSettings() {
         <a class="btn ghost small" href="/api/export/csv">Export list (CSV)</a>
         <a class="btn ghost small" href="/api/backup">Download backup</a>
       </div>
+    </div>
+    <div class="card">
+      <h3>⚖️ eCourts memory</h3>
+      <div id="ecourts-box"><p class="small muted">Loading remembered cases…</p></div>
+      <p class="small muted">Send the eCourts <b>Case Status</b> page saved as a <code>.txt</code> file once — in this chat or on WhatsApp. Every CNR, court, next hearing and stage in it is kept forever. Say <code>ecourts</code> or <code>next hearing</code> to use it.</p>
+      <div class="doc-actions"><label class="btn ghost small" for="ecourts-file">＋ Add eCourts .txt</label>
+      <input id="ecourts-file" type="file" accept=".txt,text/plain" hidden /></div>
     </div>
     <div class="card">
       <h3>📱 WhatsApp</h3>
@@ -754,9 +968,11 @@ function renderSettings() {
         <button class="btn ghost small" id="logout">Lock dashboard</button>
       </div>
     </div>`;
+  loadEcourtsCard();
   const logout = $('#logout');
   if (logout) {
     logout.onclick = async () => {
+      localStorage.removeItem(TOKEN_KEY);
       await api('/api/logout', { method: 'POST' });
       location.reload();
     };
@@ -767,6 +983,7 @@ function renderSettings() {
 
 if (new URLSearchParams(location.search).get('token')) {
   const token = new URLSearchParams(location.search).get('token');
+  localStorage.setItem(TOKEN_KEY, token);
   api('/api/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },

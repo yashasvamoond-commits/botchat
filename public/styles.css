@@ -324,3 +324,57 @@ textarea#draft-instruction { min-height: 92px; }
   .chat-wrap { min-height: 66vh; }
   .grid-2 { grid-template-columns: 1fr; }
 }
+
+/* ── iPhone / Android polish ──────────────────────────── */
+:root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+body { -webkit-text-size-adjust: 100%; }
+.gate { padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom)); }
+.shell { padding-top: var(--safe-top); min-height: 100dvh; }
+.rail { padding-bottom: calc(6px + var(--safe-bottom)); }
+.composer { padding-bottom: calc(10px + var(--safe-bottom)); }
+.main { min-height: 100dvh; }
+/* 16px inputs stop iOS from zooming the page on focus */
+input, textarea, select { font-size: 16px; }
+button, .rail-item, .chip { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.chat-wrap { scroll-behavior: smooth; }
+@media (display-mode: standalone) {
+  .rail-foot { display: none; }
+  .pane-head h1 { padding-top: 2px; }
+}
+
+/* ── language switch ──────────────────────────────────── */
+.lang-switch {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: var(--green-soft); border: 1px solid var(--line);
+  border-radius: 999px; padding: 2px;
+}
+.lang-switch button {
+  border: 0; background: transparent; color: var(--ink-soft);
+  font: 600 11.5px/1 var(--sans); padding: 5px 8px; border-radius: 999px; cursor: pointer;
+}
+.lang-switch button.on { background: var(--green); color: #eaf6ee; }
+
+/* ── right-to-left (Urdu) ─────────────────────────────── */
+html[dir="rtl"] body { direction: rtl; }
+html[dir="rtl"] .chat-bubble { text-align: right; }
+html[dir="rtl"] .rail nav { text-align: right; }
+html[dir="rtl"] .head-actions { margin-left: 0; margin-right: auto; }
+html[dir="rtl"] .doc-rows, html[dir="rtl"] .chips { direction: rtl; }
+html[dir="rtl"] .composer input, html[dir="rtl"] .composer textarea { text-align: right; }
+html[dir="rtl"] .lang-switch { direction: ltr; }
+html[dir="rtl"] .library-list .search-row input { text-align: right; }
+
+/* Urdu must use a nastaliq-capable stack, Hindi a Devanagari one. */
+html[lang="ur"] body, html[lang="ur"] .chat-bubble, html[lang="ur"] input, html[lang="ur"] textarea {
+  font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Segoe UI", Tahoma, var(--sans);
+  line-height: 1.9;
+}
+html[lang="hi"] body, html[lang="hi"] input, html[lang="hi"] textarea {
+  font-family: "Noto Sans Devanagari", "Kohinoor Devanagari", "Nirmala UI", var(--sans);
+}
+
+/* ── eCourts list in setup ────────────────────────────── */
+.ec-list { margin-top: 10px; display: grid; gap: 6px; }
+.ec-row { border-top: 1px solid var(--line); padding-top: 6px; font-size: 13px; }
+.ec-row b { display: block; font-weight: 600; }
+.ec-row small { color: var(--muted); }

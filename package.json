@@ -2,7 +2,7 @@
   "name": "x-document-manager",
   "version": "1.0.0",
   "private": true,
-  "description": "X Document Manager \u2014 a WhatsApp document manager, analyser and search bot for lawyers and anyone drowning in paperwork.",
+  "description": "X Document Manager — a WhatsApp document manager, analyser and search bot for lawyers and anyone drowning in paperwork.",
   "type": "module",
   "main": "src/server.js",
   "engines": {
@@ -13,7 +13,8 @@
     "dev": "node --no-warnings --watch src/server.js",
     "seed": "node --no-warnings scripts/seed-demo.js",
     "test": "node --no-warnings --test",
-    "sim": "node --no-warnings scripts/chat-cli.js"
+    "sim": "node --no-warnings scripts/chat-cli.js",
+    "ecourts": "node --no-warnings scripts/import-ecourts.js"
   },
   "dependencies": {
     "archiver": "^7.0.1",

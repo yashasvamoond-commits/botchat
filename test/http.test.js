@@ -26,6 +26,13 @@ test.after(() => {
   server.close();
 });
 
+test('the health probe answers without a login', async () => {
+  const res = await api('/healthz');
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.ok, true);
+});
+
 test('the dashboard is closed until the access code is given', async () => {
   const denied = await api('/api/overview');
   assert.equal(denied.status, 401);

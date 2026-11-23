@@ -254,7 +254,17 @@ Reply with the number I show, or the id like *D12*. I send the actual file back.
 \`draft NDA between Acme Pvt Ltd and Rakesh\`
 Drafts come as Word + PDF, saved in your library.
 
-*7. Fix anything*
+*7. eCourts, remembered*
+Send the eCourts Case Status page saved as a .txt file **once**. I keep every case in it for good.
+\`ecourts\` — all remembered cases
+\`next hearing\` — the court diary
+\`RJJP010012342018\` — one case by CNR
+
+*8. Hindi and Urdu*
+Send a paper in Hindi or Urdu (किराया अनुबंध, विधिक सूचना, शपथ पत्र, قانونی نوٹس, حلف نامہ). I read the same fields, keep the Hindi/Urdu title, and answer in English.
+You can also ask in Hindi or Urdu — \`पिछले महीने के नोटिस\`, \`گزشتہ ماہ کے نوٹس\`, \`अगली सुनवाई\`.
+
+*9. Fix anything*
 \`rename D12 Sharma rent agreement 2024\`
 \`tag D12 urgent\`
 \`type D12 plaint\`
