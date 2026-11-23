@@ -17,6 +17,8 @@ import { searchDocuments, findRelated } from './search/search.js';
 import { parseQuery } from './search/queryParser.js';
 import { handleText, handleMedia } from './bot/handlers.js';
 import { ingestFile } from './ingest/pipeline.js';
+import { importEcourtsUpload } from './ingest/ecourts.js';
+import { ecourtsSummary, listEcourtsCases, upcomingHearings, findEcourtsCase } from './store/ecourts.js';
 import { archiveDelete } from './store/trash.js';
 import { buildBundle } from './bundle/builder.js';
 import { createDraftDocument, DRAFT_TEMPLATES } from './draft/generator.js';
@@ -287,10 +289,38 @@ api.post('/deadlines/:id/done', (req, res) => {
   res.json({ ok: true });
 });
 
+api.get('/ecourts', (req, res) => {
+  const query = String(req.query.q || '');
+  res.json({
+    summary: ecourtsSummary(SIM_OWNER),
+    cases: listEcourtsCases(SIM_OWNER, { query, limit: Number(req.query.limit) || 100 }),
+    upcoming: upcomingHearings(SIM_OWNER, { limit: 20 }),
+  });
+});
+
+api.get('/ecourts/:cnr', (req, res) => {
+  const record = findEcourtsCase(SIM_OWNER, req.params.cnr);
+  if (!record) return res.status(404).json({ error: 'No remembered eCourts case with that CNR.' });
+  res.json({ case: record });
+});
+
 api.post('/upload', async (req, res) => {
   try {
     const { fields, files } = await parseMultipart(req);
     const file = files[0];
+    // An eCourts .txt dump goes to permanent memory, not the document library.
+    if (/\.txt$/i.test(file.filename || '') || /^text\/plain/i.test(file.mime || '')) {
+      const imported = importEcourtsUpload({ owner: SIM_OWNER, buffer: file.buffer, filename: file.filename });
+      if (imported.handled) {
+        return res.json({
+          ecourts: true,
+          added: imported.added,
+          updated: imported.updated,
+          cases: imported.records.map((r) => ({ cnr: r.cnr, title: r.title, nextHearing: r.next_hearing })),
+          message: imported.message,
+        });
+      }
+    }
     const result = await ingestFile({
       owner: SIM_OWNER,
       buffer: file.buffer,

@@ -1,4 +1,4 @@
-import { relativeRange, MONTHS } from '../util/dates.js';
+import { relativeRange, MONTHS, LOCAL_MONTH_WORDS, localizeDateText } from '../util/dates.js';
 import { normalize, collapse } from '../util/text.js';
 import { TYPE_HINTS } from './synonyms.js';
 import { queryTokens } from './tokenize.js';
@@ -9,7 +9,18 @@ const DATE_PHRASES = [
   'today', 'yesterday', 'this week', 'last week', 'this month', 'last month',
   'previous month', 'this year', 'last year', 'previous year', 'aaj', 'pichle mahine',
   'is mahine', 'pichle saal', 'is saal', 'is hafte',
+  // Hindi / Urdu forms of the same phrases
+  'आज', 'कल', 'इस हफ्ते', 'इस हफ़्ते', 'पिछले हफ्ते', 'पिछले हफ़्ते', 'इस महीने', 'इस माह',
+  'पिछले महीने', 'पिछले माह', 'इस साल', 'पिछले साल',
+  'آج', 'کل', 'اس ہفتے', 'گزشتہ ہفتے', 'اس ماہ', 'اس مہینے', 'گزشتہ ماہ', 'پچھلے مہینے',
+  'اس سال', 'گزشتہ سال', 'پچھلے سال',
 ];
+
+const LOCAL_MONTH_ALT = Object.keys(LOCAL_MONTH_WORDS)
+  .sort((a, b) => b.length - a.length)
+  .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  .join('|');
+const LOCAL_MONTH_YEAR = new RegExp(`(${LOCAL_MONTH_ALT})(?:\\s*(\\d{4}))?`);
 
 const SORT_HINTS = [
   { re: /\b(?:latest|newest|most\s+recent|recent|last\s+one|new\s+one)\b/i, sort: 'newest' },
@@ -81,18 +92,35 @@ export function parseQuery(raw, { matters = [] } = {}) {
   const lower = normalize(text);
   const rangeCandidates = [];
   for (const phrase of DATE_PHRASES) if (lower.includes(phrase)) rangeCandidates.push(phrase);
+  const localMonth = LOCAL_MONTH_YEAR.exec(text);
+  if (localMonth) rangeCandidates.push(collapse(localMonth[0]));
   const monthYear = /\b(?:in\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:\s+(\d{4}))?\b/i.exec(text);
   if (monthYear) rangeCandidates.push(monthYear[0].replace(/^in\s+/i, ''));
   const yearOnly = /\b(19\d{2}|20\d{2})\b/.exec(text);
   if (yearOnly && !monthYear) rangeCandidates.push(yearOnly[1]);
   const lastN = /\blast\s+(\d{1,2})\s+(days?|weeks?|months?)\b/i.exec(text);
   if (lastN) rangeCandidates.push(lastN[0]);
+  // "पिछले 3 महीने" / "گزشتہ 3 ماہ" → "last 3 months"
+  const lastNLocal = /(?:पिछले|पिछला|گزشتہ|پچھلے)\s*(\d{1,2})\s*(दिन|दिवस|सप्ताह|हफ्ते|हफ़्ते|महीने|माह|دن|ہفتے|ماہ|مہینے)/.exec(text);
+  if (lastNLocal) {
+    const unit = /दिन|दिवस|دن/.test(lastNLocal[2]) ? 'days'
+      : /सप्ताह|हफ|ہفت/.test(lastNLocal[2]) ? 'weeks' : 'months';
+    rangeCandidates.push(`last ${lastNLocal[1]} ${unit}`);
+  }
 
   for (const candidate of rangeCandidates) {
-    const range = relativeRange(candidate);
+    // Local month names are understood by translating just the probe string.
+    const range = relativeRange(candidate) || relativeRange(localizeDateText(candidate));
     if (!range) continue;
     plan.dateRange = range;
-    text = text.replace(new RegExp(candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ');
+    if (!text.replace(new RegExp(candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ').trim().length
+        || new RegExp(candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(text)) {
+      text = text.replace(new RegExp(candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ');
+    } else {
+      // Candidate came from a translated probe: strip the original local phrase.
+      const localMatch = LOCAL_MONTH_YEAR.exec(text);
+      if (localMatch && /^(?:last|previous)\b/.test(candidate) === false) text = text.replace(localMatch[0], ' ');
+    }
     break;
   }
 

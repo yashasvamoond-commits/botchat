@@ -10,6 +10,7 @@ import {
 } from './entities.js';
 import { sentences, paragraphs, collapse, clip, normalize, titleCase } from '../util/text.js';
 import { formatDate, toIso, daysBetween } from '../util/dates.js';
+import { formatIndianCurrency } from '../util/numberWords.js';
 
 const KEY_POINT_HINTS = [
   /shall\s+(?:pay|refund|deliver|execute|comply|indemnify|vacate|provide)/i,
@@ -26,19 +27,19 @@ const KEY_POINT_HINTS = [
 ];
 
 const CLAUSE_CATEGORIES = [
-  { key: 'notice', pattern: /\b(?:notice|termination|terminate|terminable)\b/i, label: 'Notice & termination' },
-  { key: 'term', pattern: /\b(?:terms?|tenure|period|duration|commencement|commencing)\b/i, label: 'Term' },
-  { key: 'deposit', pattern: /\b(?:deposit|advance|security)\b/i, label: 'Security deposit' },
-  { key: 'rent', pattern: /\b(?:rent|licen[cs]e\s+fee|consideration|salary|price|payment)\b/i, label: 'Payment' },
-  { key: 'renewal', pattern: /\b(?:renewal|renew|extension)\b/i, label: 'Renewal' },
-  { key: 'jurisdiction', pattern: /\b(?:jurisdiction|courts?\s+at)\b/i, label: 'Jurisdiction' },
-  { key: 'arbitration', pattern: /\b(?:arbitration|arbitrator)\b/i, label: 'Arbitration' },
-  { key: 'confidentiality', pattern: /\b(?:confidential|non-?disclosure|nda)\b/i, label: 'Confidentiality' },
-  { key: 'indemnity', pattern: /\b(?:indemn\w*|liabilit\w*)\b/i, label: 'Indemnity & liability' },
-  { key: 'maintenance', pattern: /\b(?:maintenance|repair|whitewash|society\s+charges|electricity|water)\b/i, label: 'Maintenance & utilities' },
-  { key: 'possession', pattern: /\b(?:possession|handover|vacat\w*)\b/i, label: 'Possession' },
-  { key: 'default', pattern: /\b(?:default|breach|penalt\w*|forfeit\w*)\b/i, label: 'Default & penalty' },
-  { key: 'assignment', pattern: /\b(?:assign\w*|sublet|sub-?lease|transfer)\b/i, label: 'Assignment' },
+  { key: 'notice', pattern: /\b(?:notice|termination|terminate|terminable)\b|सूचना|नोटिस|समाप्ति|اطلاع|نوٹس|ختم/i, label: 'Notice & termination' },
+  { key: 'term', pattern: /\b(?:terms?|tenure|period|duration|commencement|commencing)\b|अवधि|मियाद|مدت/i, label: 'Term' },
+  { key: 'deposit', pattern: /\b(?:deposit|advance|security)\b|जमा|अमानत|ضمانت|امانت/i, label: 'Security deposit' },
+  { key: 'rent', pattern: /\b(?:rent|licen[cs]e\s+fee|consideration|salary|price|payment)\b|किराया|वेतन|भुगतान|کرایہ|تنخواہ|ادائیگی/i, label: 'Payment' },
+  { key: 'renewal', pattern: /\b(?:renewal|renew|extension)\b|नवीनीकरण|تجدید/i, label: 'Renewal' },
+  { key: 'jurisdiction', pattern: /\b(?:jurisdiction|courts?\s+at)\b|अधिकार\s*क्षेत्र|न्यायालय|عدالت|دائرہ\s*اختیار/i, label: 'Jurisdiction' },
+  { key: 'arbitration', pattern: /\b(?:arbitration|arbitrator)\b|माध्यस्थम्|पंच|ثالثی|پنچایت/i, label: 'Arbitration' },
+  { key: 'confidentiality', pattern: /\b(?:confidential|non-?disclosure|nda)\b|गोपनीयता|رازداری/i, label: 'Confidentiality' },
+  { key: 'indemnity', pattern: /\b(?:indemn\w*|liabilit\w*)\b|क्षतिपूर्ति|हानि|تلافی|نقصان/i, label: 'Indemnity & liability' },
+  { key: 'maintenance', pattern: /\b(?:maintenance|repair|whitewash|society\s+charges|electricity|water)\b|रखरखाव|मरम्मत|बिजली|पानी|دیکھ\s*بھال|مرمت|بجلی|پانی/i, label: 'Maintenance & utilities' },
+  { key: 'possession', pattern: /\b(?:possession|handover|vacat\w*)\b|कब्जा|कब्ज़ा|खाली|قبضہ|خالی/i, label: 'Possession' },
+  { key: 'default', pattern: /\b(?:default|breach|penalt\w*|forfeit\w*)\b|उल्लंघन|जुर्माना|विलोप|خلاف\s*ورزی|جرمانہ|ضبط/i, label: 'Default & penalty' },
+  { key: 'assignment', pattern: /\b(?:assign\w*|sublet|sub-?lease|transfer)\b|हस्तांतरण|अंतरण|उपकिराया|منتقلی|ذیلی\s*کرایہ/i, label: 'Assignment' },
   { key: 'governing', pattern: /\b(?:governing\s+law|entire\s+agreement|amendment|waiver)\b/i, label: 'General' },
 ];
 
@@ -70,7 +71,13 @@ function filenameHint(filename) {
 
 const NOTICE_TYPES = new Set(['legal_notice', 'cheque_bounce_notice', 'notice_reply', 'rent_notice']);
 
-export function buildTitle({ typeLabel, docType = '', parties = [], docDate, caseNumber, reference, filename = '', originalName = '' }) {
+const NATIVE_LABEL = (typeId, language) => {
+  const type = TYPE_BY_ID.get(typeId);
+  if (!type) return null;
+  return language === 'hi' ? type.labelHi : language === 'ur' ? type.labelUr : null;
+};
+
+export function buildTitle({ typeLabel, docType = '', parties = [], docDate, caseNumber, reference, filename = '', originalName = '', language = 'en' }) {
   const strong = partyNames(parties).filter((p) => (p.strength ?? 3) >= 3);
   const named = strong.length ? strong : [];
   const addressee = named.find((p) => /addressee/i.test(p.role || ''));
@@ -80,12 +87,17 @@ export function buildTitle({ typeLabel, docType = '', parties = [], docDate, cas
   const year = docDate ? docDate.slice(0, 4) : '';
   const isNotice = NOTICE_TYPES.has(docType) || /notice/i.test(typeLabel);
   const hint = filenameHint(originalName || filename);
+  // A Hindi paper keeps its Hindi name; the English label stays in the catalogue.
+  const native = NATIVE_LABEL(docType, language);
+  typeLabel = native || typeLabel;
 
   let title = typeLabel;
   if (isNotice && first) {
-    title = `${typeLabel} — to ${first}`;
+    const to = language === 'hi' ? 'को' : language === 'ur' ? 'بنام' : 'to';
+    title = language === 'hi' ? `${typeLabel} — ${first} को` : `${typeLabel} — ${to} ${first}`;
   } else if (first && second && normalize(first) !== normalize(second)) {
-    title = `${typeLabel} — ${first} v ${second}`;
+    const versus = language === 'hi' ? ' बनाम ' : language === 'ur' ? ' بنام ' : ' v ';
+    title = `${typeLabel} — ${first}${versus}${second}`;
   } else if (first) {
     title = `${typeLabel} — ${first}`;
   } else if (hint && normalize(hint).startsWith(normalize(typeLabel.split(/[\/(]/)[0]).split(' ')[0])) {
@@ -144,7 +156,7 @@ export function extractClauses(text) {
   const clauses = [];
   for (const block of blocks) {
     const trimmed = collapse(block);
-    const headingMatch = /^(?:\d{1,2}[.)]|[IVX]{1,4}[.)]|[a-z][.)])\s*([^.:\n]{2,80})/.exec(trimmed);
+    const headingMatch = /^(?:\d{1,2}[.)]|[IVX]{1,4}[.)]|[a-z][.)])\s*([^.:।۔\n]{2,80})/.exec(trimmed);
     const heading = headingMatch ? headingMatch[1] : '';
     // Only real clause blocks make useful "clauses" — skip letters, preambles and recitals.
     if (!heading) continue;
@@ -154,7 +166,7 @@ export function extractClauses(text) {
       if (clauses.some((c) => c.key === category.key)) continue;
       let body = trimmed.replace(/^(?:\d{1,2}[.)]|[IVX]{1,4}[.)]|[a-z][.)])\s*/, '');
       if (heading) {
-        body = body.replace(new RegExp(`^${heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[.:\s\-–—]*`, 'i'), '');
+        body = body.replace(new RegExp(`^${heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[.:।۔\s\-–—]*`, 'i'), '');
       }
       clauses.push({
         key: category.key,
@@ -168,12 +180,13 @@ export function extractClauses(text) {
   return clauses.slice(0, 8);
 }
 
-function buildSummary({ typeLabel, docDate, parties, amounts, court, caseNumber, clauses, text, language }) {
+function buildSummary({ typeLabel, docType, docDate, parties, amounts, court, caseNumber, clauses, text, language }) {
   const named = partyNames(parties);
   const isNotice = /notice/i.test(typeLabel);
   const addressee = named.find((p) => /addressee/i.test(p.role || ''));
+  const native = NATIVE_LABEL(docType, language);
   const bits = [];
-  bits.push(`${typeLabel}${docDate ? ` dated ${formatDate(docDate, { long: true })}` : ''}`);
+  bits.push(`${typeLabel}${native && native !== typeLabel ? ` (${native})` : ''}${docDate ? ` dated ${formatDate(docDate, { long: true })}` : ''}`);
   if (isNotice && addressee) {
     bits.push(`addressed to ${addressee.name}`);
     const other = named.find((p) => p !== addressee);
@@ -188,14 +201,19 @@ function buildSummary({ typeLabel, docDate, parties, amounts, court, caseNumber,
   let summary = `${bits.join(', ')}.`;
 
   if (amounts.length) {
-    const top = amounts.slice(0, 2).map((a) => `${a.label.toLowerCase()} ${a.raw}`).join(', ');
+    const top = amounts.slice(0, 2).map((a) => `${a.label.toLowerCase()} ${formatIndianCurrency(a.value)}`).join(', ');
     summary += ` Key figures: ${top}.`;
   }
 
+  // For Hindi/Urdu papers the English summary stays factual; the original
+  // wording is shown separately in the card ("original text").
+  const foreign = language === 'hi' || language === 'ur' || language === 'mixed';
   const importantClause = clauses.find((c) => ['term', 'rent', 'notice', 'jurisdiction', 'arbitration'].includes(c.key) && c.heading && c.heading.length < 40);
-  if (importantClause) {
+  if (importantClause && !foreign) {
     summary += ` ${importantClause.label}: ${clip(importantClause.text, 170)}`;
-  } else {
+  } else if (importantClause && foreign) {
+    summary += ` ${importantClause.label}: ${clip(importantClause.text, 150)}`;
+  } else if (!foreign) {
     const body = keyPoints(text, 1)[0];
     if (body) summary += ` ${clip(body, 190)}`;
   }
@@ -204,6 +222,8 @@ function buildSummary({ typeLabel, docDate, parties, amounts, court, caseNumber,
     summary = `${typeLabel}${docDate ? ` dated ${formatDate(docDate)}` : ''} — no readable text inside this file, so it is catalogued by its name, date and caption.`;
   }
   if (language === 'hi') summary += ' (Document is in Hindi.)';
+  else if (language === 'ur') summary += ' (Document is in Urdu.)';
+  else if (language === 'mixed') summary += ' (Document mixes Hindi/Urdu and English.)';
   return clip(summary, 620);
 }
 
@@ -264,11 +284,11 @@ export function analyzeDocument({
   const typeLabel = classification.label;
   const title = buildTitle({
     typeLabel, docType: classification.id, parties, docDate, caseNumber,
-    reference: references.other[0], filename, originalName: filename,
+    reference: references.other[0], filename, originalName: filename, language,
   });
 
   const summary = buildSummary({
-    typeLabel, docDate, parties, amounts, court, caseNumber, clauses, text: cleanText, language,
+    typeLabel, docType: classification.id, docDate, parties, amounts, court, caseNumber, clauses, text: cleanText, language,
   });
 
   const flags = [];

@@ -1,0 +1,26 @@
+{
+  "name": "X Document Manager",
+  "short_name": "X Docs",
+  "description": "A private legal document library and WhatsApp-style assistant. Send a paper in English, Hindi or Urdu; ask for it later.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#f7f6f1",
+  "theme_color": "#0f5132",
+  "lang": "en",
+  "dir": "auto",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Chat", "url": "/?tab=chat" },
+    { "name": "Library", "url": "/?tab=library" },
+    { "name": "Dates", "url": "/?tab=dates" }
+  ]
+}

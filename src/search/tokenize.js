@@ -21,6 +21,17 @@ export const STOPWORDS = new Set([
   'explain', 'summary', 'summarise', 'summarize', 'everything', 'something',
   'anything', 'item', 'items', 'stuff', 'case', 'cases', 'matter', 'matters',
   'dossier', 'record', 'records',
+  // ── Hindi function words ─────────────────────────────────────────────────
+  'का', 'की', 'के', 'को', 'से', 'में', 'पर', 'और', 'या', 'है', 'हैं', 'था', 'थी', 'थे',
+  'यह', 'वह', 'ये', 'वे', 'इस', 'उस', 'एक', 'भी', 'तो', 'नहीं', 'हो', 'कर', 'किया',
+  'दिखाओ', 'दिखाइए', 'दिखाएं', 'भेजो', 'भेजिए', 'चाहिए', 'मुझे', 'मेरा', 'मेरी', 'मेरे',
+  'खोजो', 'ढूंढो', 'बताओ', 'बताइए', 'क्या', 'कौन', 'कब', 'कहाँ', 'कितना', 'कितने',
+  'फाइल', 'फ़ाइल', 'कागज', 'कागज़', 'दस्तावेज', 'दस्तावेज़', 'मामला', 'मामले',
+  // ── Urdu function words ──────────────────────────────────────────────────
+  'کا', 'کی', 'کے', 'کو', 'سے', 'میں', 'پر', 'اور', 'یا', 'ہے', 'ہیں', 'تھا', 'تھی', 'تھے',
+  'یہ', 'وہ', 'ایک', 'بھی', 'تو', 'نہیں', 'ہو', 'کر', 'کیا', 'دکھاو', 'دکھائیں', 'بھیجو',
+  'بھیجیں', 'چاہیے', 'چاہیے', 'مجھے', 'میرا', 'میری', 'میرے', 'ڈھونڈو', 'بتاو', 'بتائیں',
+  'کیا', 'کون', 'کب', 'کہاں', 'کتنا', 'کتنی', 'فائل', 'کاغذ', 'دستاویز', 'مقدمہ', 'مقدمے',
 ]);
 
 const SUFFIXES = ['ings', 'ing', 'edly', 'ed', 'ies', 'es', 's'];
@@ -30,6 +41,9 @@ export function stem(word) {
   let w = word;
   if (w.length <= 3) return w;
   if (/^\d+$/.test(w)) return w;
+  // Devanagari and Arabic-script words are not English: leave them whole and let
+  // the FTS prefix index (2/3/5) handle inflections such as नोटिस → नोटिसें.
+  if (/[\u0900-\u097F\u0600-\u06FF]/.test(w)) return w;
   for (const suffix of SUFFIXES) {
     if (w.endsWith(suffix) && w.length - suffix.length >= 3) {
       if (suffix === 'ies') return `${w.slice(0, -3)}y`;
@@ -42,7 +56,7 @@ export function stem(word) {
 
 export function tokenize(text) {
   return normalize(text)
-    .split(/[^a-z0-9\u0900-\u097F]+/)
+    .split(/[^a-z0-9\u0900-\u097F\u0600-\u06FF\u0750-\u077F]+/)
     .filter((w) => w && w.length > 1 && !STOPWORDS.has(w))
     .map((w) => stem(w));
 }
@@ -50,7 +64,7 @@ export function tokenize(text) {
 /** Split a query into meaningful tokens, keeping original spellings. */
 export function queryTokens(text) {
   return normalize(text)
-    .split(/[^a-z0-9\u0900-\u097F]+/)
+    .split(/[^a-z0-9\u0900-\u097F\u0600-\u06FF\u0750-\u077F]+/)
     .filter((w) => w && w.length > 1 && !STOPWORDS.has(w));
 }
 

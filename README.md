@@ -205,3 +205,27 @@ as Word files (the PDF writer is Latin-only, so Hindi drafts are sent as `.docx`
 - Demo data: `npm run seed` to load, `npm run seed -- --clear` to remove.
 
 Built for one desk, not a thousand: everything is a folder and a database you can copy.
+
+## Hindi and Urdu
+
+Documents in **Hindi** and **Urdu** are read with the same fields as English — type,
+date, parties with roles, amounts, court, case numbers and sections. The title stays
+in the document's own script (for example `किराया अनुबंध — शर्मा बनाम मेहता (2026)`),
+searches work with Devanagari or Urdu words (`पिछले महीने के नोटिस`, `گزشتہ ماہ کے نوٹس`),
+and the dashboard has a language switch that also sets right-to-left layout for Urdu.
+PDF export is Latin-only, so Hindi/Urdu exports are produced as **DOCX**.
+
+## eCourts memory
+
+Send the eCourts **Case Status** page saved as a `.txt` file **once** — from the chat,
+from WhatsApp, or with:
+
+```
+npm run ecourts -- path/to/ecourts.txt
+```
+
+Every CNR, case number, court, party, stage, status and next hearing date in the file is
+stored in SQLite (`ecourts_cases`) and the raw file is kept in `data/ecourts/`. It survives
+restarts, so the file never has to be sent again. Ask `ecourts`, `next hearing`, or send a
+CNR number to get a case back. The dashboard shows the same data under **Setup → eCourts memory**,
+and `GET /api/ecourts` returns it as JSON.

@@ -131,6 +131,32 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS idx_messages_owner ON messages(owner, id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_wa ON messages(wa_id) WHERE wa_id IS NOT NULL;
 
+-- eCourts case status data, imported from a .txt dump and remembered forever.
+CREATE TABLE IF NOT EXISTS ecourts_cases (
+  id             TEXT PRIMARY KEY,
+  owner          TEXT NOT NULL,
+  cnr            TEXT,
+  case_number    TEXT,
+  title          TEXT,
+  court          TEXT,
+  petitioner     TEXT,
+  respondent     TEXT,
+  status         TEXT,
+  stage          TEXT,
+  filing_date    TEXT,
+  next_hearing   TEXT,
+  last_hearing   TEXT,
+  acts           TEXT,
+  police_station TEXT,
+  fir_number     TEXT,
+  source_file    TEXT,
+  raw            TEXT,
+  created_at     TEXT NOT NULL,
+  updated_at     TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_ecourts_owner ON ecourts_cases(owner, next_hearing);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ecourts_key ON ecourts_cases(owner, cnr) WHERE cnr IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS bundles (
   id         TEXT PRIMARY KEY,
   seq        INTEGER NOT NULL,

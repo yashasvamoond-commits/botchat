@@ -2,9 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#0f5132" />
+<meta name="description" content="Private legal document library — send a paper in English, Hindi or Urdu and ask for it later." />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="X Docs" />
+<meta name="format-detection" content="telephone=no" />
 <title>X Document Manager</title>
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
 <link rel="stylesheet" href="/styles.css" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f5132'/><path d='M30 30l40 40M70 30L30 70' stroke='%23e8f5ec' stroke-width='12' stroke-linecap='round'/></svg>" />
 </head>
@@ -12,10 +21,10 @@
 
 <div id="gate" class="gate hidden">
   <div class="gate-card">
-    <div class="brand"><span class="brand-mark">X</span><div><b>X Document Manager</b><small>Private legal document library</small></div></div>
-    <label for="token">Access code</label>
+    <div class="brand"><span class="brand-mark">X</span><div><b>X Document Manager</b><small data-i18n="gate.sub">Private legal document library</small></div></div>
+    <label for="token" data-i18n="gate.label">Access code</label>
     <input id="token" type="text" placeholder="ABC-DEF-GHI" autocomplete="off" spellcheck="false" />
-    <button id="gate-btn" class="btn primary">Unlock my files</button>
+    <button id="gate-btn" class="btn primary" data-i18n="gate.button">Unlock my files</button>
     <p class="muted small">The code is printed in the terminal when the app starts, and saved in <code>data/dashboard-token.txt</code>.</p>
     <p id="gate-error" class="error small"></p>
   </div>
@@ -25,12 +34,12 @@
   <aside class="rail">
     <div class="rail-brand" title="X Document Manager"><span class="brand-mark">X</span></div>
     <nav>
-      <button class="rail-item active" data-tab="chat"><span class="ico">💬</span><em>Chat</em></button>
-      <button class="rail-item" data-tab="library"><span class="ico">📚</span><em>Library</em></button>
-      <button class="rail-item" data-tab="cases"><span class="ico">📁</span><em>Cases</em></button>
-      <button class="rail-item" data-tab="dates"><span class="ico">🗓</span><em>Dates</em></button>
-      <button class="rail-item" data-tab="draft"><span class="ico">✍️</span><em>Draft</em></button>
-      <button class="rail-item" data-tab="settings"><span class="ico">⚙️</span><em>Setup</em></button>
+      <button class="rail-item active" data-tab="chat"><span class="ico">💬</span><em data-i18n="nav.chat">Chat</em></button>
+      <button class="rail-item" data-tab="library"><span class="ico">📚</span><em data-i18n="nav.library">Library</em></button>
+      <button class="rail-item" data-tab="cases"><span class="ico">📁</span><em data-i18n="nav.cases">Cases</em></button>
+      <button class="rail-item" data-tab="dates"><span class="ico">🗓</span><em data-i18n="nav.dates">Dates</em></button>
+      <button class="rail-item" data-tab="draft"><span class="ico">✍️</span><em data-i18n="nav.draft">Draft</em></button>
+      <button class="rail-item" data-tab="settings"><span class="ico">⚙️</span><em data-i18n="nav.settings">Setup</em></button>
     </nav>
     <div class="rail-foot">
       <span id="wa-dot" class="dot"></span>
@@ -43,24 +52,29 @@
     <section class="tab active" id="tab-chat">
       <header class="pane-head">
         <div>
-          <h1>X Document Manager</h1>
-          <p class="muted small">Send a document. Ask for it later. <span id="chat-count"></span></p>
+          <h1 data-i18n="app.title">X Document Manager</h1>
+          <p class="muted small"><span data-i18n="chat.sub">Send a document. Ask for it later.</span> <span id="chat-count"></span></p>
         </div>
         <div class="head-actions">
-          <button class="btn ghost" id="chat-reset">Clear view</button>
+          <div class="lang-switch" id="lang-switch" role="group" aria-label="Language">
+            <button type="button" data-lang="en" class="on">EN</button>
+            <button type="button" data-lang="hi">हिं</button>
+            <button type="button" data-lang="ur">اردو</button>
+          </div>
+          <button class="btn ghost" id="chat-reset" data-i18n="chat.clear">Clear view</button>
         </div>
       </header>
       <div class="chat-wrap">
         <div class="chat" id="chat">
           <div class="chat-day">Today</div>
           <div class="note-strip">
-            This is your WhatsApp assistant. Send a PDF, Word file or photo of a paper — ask for it by name later. Files never leave this server.
+            <span data-i18n="chat.note">This is your WhatsApp assistant. Send a PDF, Word file or photo of a paper — ask for it by name later. Files never leave this server. Hindi and Urdu papers are read too.</span>
           </div>
         </div>
         <form class="composer" id="composer">
           <button type="button" class="icon-btn" id="attach" title="Send a document">📎</button>
           <input type="file" id="file-input" hidden accept=".pdf,.docx,.doc,.txt,.csv,.png,.jpg,.jpeg,.webp,.tif,.tiff,.xlsx,.rtf" />
-          <textarea id="message" rows="1" placeholder="Ask for a document, or type help…" autocomplete="off"></textarea>
+          <textarea id="message" rows="1" data-i18n-ph="chat.placeholder" placeholder="Ask for a document, or type help…" autocomplete="off" enterkeyhint="send"></textarea>
           <button class="btn primary send" type="submit" title="Send">➤</button>
         </form>
         <div id="attach-preview" class="attach-preview hidden"></div>
@@ -71,19 +85,19 @@
     <section class="tab" id="tab-library">
       <header class="pane-head">
         <div>
-          <h1>Library</h1>
+          <h1 data-i18n="library.title">Library</h1>
           <p class="muted small" id="library-count">Everything you have ever filed.</p>
         </div>
         <div class="head-actions">
-          <button class="btn ghost" id="upload-open">＋ Add documents</button>
-          <a class="btn ghost" href="/api/export/csv">Export list</a>
+          <button class="btn ghost" id="upload-open" data-i18n="library.add">＋ Add documents</button>
+          <a class="btn ghost" href="/api/export/csv" data-i18n="library.export">Export list</a>
         </div>
       </header>
       <input type="file" id="lib-file" hidden multiple accept=".pdf,.docx,.doc,.txt,.csv,.png,.jpg,.jpeg,.webp,.tif,.tiff,.xlsx,.rtf" />
       <div class="library-body">
         <div class="library-list">
           <div class="search-row">
-            <input id="lib-search" type="search" placeholder="Search: rent agreement Sharma, notices 2023, cheque bounce…" />
+            <input id="lib-search" type="search" data-i18n-ph="library.search" placeholder="Search: rent agreement Sharma, notices 2023, cheque bounce…" />
           </div>
           <div class="chips" id="type-chips"></div>
           <div id="doc-rows" class="doc-rows"></div>
@@ -101,10 +115,10 @@
     <section class="tab" id="tab-cases">
       <header class="pane-head">
         <div>
-          <h1>Cases</h1>
-          <p class="muted small">Every document stays in the right file.</p>
+          <h1 data-i18n="cases.title">Cases</h1>
+          <p class="muted small" data-i18n="cases.sub">Every document stays in the right file.</p>
         </div>
-        <div class="head-actions"><button class="btn primary" id="new-case">＋ New case</button></div>
+        <div class="head-actions"><button class="btn primary" id="new-case" data-i18n="cases.new">＋ New case</button></div>
       </header>
       <div id="cases-body" class="cases-body"></div>
     </section>
@@ -113,21 +127,21 @@
     <section class="tab" id="tab-dates">
       <header class="pane-head">
         <div>
-          <h1>Dates &amp; reminders</h1>
-          <p class="muted small">Hearings, limitation dates and follow-ups.</p>
+          <h1 data-i18n="dates.title">Dates &amp; reminders</h1>
+          <p class="muted small" data-i18n="dates.sub">Hearings, limitation dates and follow-ups.</p>
         </div>
       </header>
       <div class="dates-body">
         <form id="deadline-form" class="card form">
-          <h3>Add a date</h3>
+          <h3 data-i18n="dates.add">Add a date</h3>
           <div class="grid-2">
-            <label>What is it?<input id="dl-title" placeholder="Hearing — Mehta matter" required /></label>
-            <label>Date<input id="dl-date" type="date" required /></label>
-            <label>Remind me (days before)<input id="dl-remind" type="number" min="0" max="90" value="3" /></label>
-            <label>Linked case<select id="dl-matter"><option value="">— none —</option></select></label>
+            <label><span data-i18n="dates.what">What is it?</span><input id="dl-title" placeholder="Hearing — Mehta matter" required /></label>
+            <label><span data-i18n="dates.when">Date</span><input id="dl-date" type="date" required /></label>
+            <label><span data-i18n="dates.remind">Remind me (days before)</span><input id="dl-remind" type="number" min="0" max="90" value="3" /></label>
+            <label><span data-i18n="dates.case">Linked case</span><select id="dl-matter"><option value="">— none —</option></select></label>
           </div>
-          <label>Note (optional)<input id="dl-detail" placeholder="Anything to remember" /></label>
-          <button class="btn primary" type="submit">Save date</button>
+          <label><span data-i18n="dates.note">Note (optional)</span><input id="dl-detail" placeholder="Anything to remember" /></label>
+          <button class="btn primary" type="submit" data-i18n="dates.save">Save date</button>
         </form>
         <div id="deadlines-list" class="dates-list"></div>
       </div>
@@ -137,19 +151,19 @@
     <section class="tab" id="tab-draft">
       <header class="pane-head">
         <div>
-          <h1>Draft a document</h1>
-          <p class="muted small">Starting points in Indian practice style. Always review before use.</p>
+          <h1 data-i18n="draft.title">Draft a document</h1>
+          <p class="muted small" data-i18n="draft.sub">Starting points in Indian practice style. Always review before use.</p>
         </div>
       </header>
       <div class="draft-body">
         <div class="card">
-          <label>What do you need?
+          <label><span data-i18n="draft.what">What do you need?</span>
             <select id="draft-template"></select>
           </label>
-          <label>Tell me the facts in one line
+          <label><span data-i18n="draft.facts">Tell me the facts in one line</span>
             <textarea id="draft-instruction" rows="3" placeholder="e.g. legal notice to Rakesh Mehta for Rs 2,50,000 unpaid invoice dated 12/04/2025, at Jaipur"></textarea>
           </label>
-          <button class="btn primary" id="draft-go">Generate draft</button>
+          <button class="btn primary" id="draft-go" data-i18n="draft.go">Generate draft</button>
           <p class="muted small">Names, amounts, dates and city are filled in automatically. Anything missing is marked with blanks and listed for you.</p>
         </div>
         <div class="card draft-out" id="draft-out">
@@ -162,8 +176,8 @@
     <section class="tab" id="tab-settings">
       <header class="pane-head">
         <div>
-          <h1>Setup &amp; housekeeping</h1>
-          <p class="muted small">Everything runs on your own machine.</p>
+          <h1 data-i18n="settings.title">Setup &amp; housekeeping</h1>
+          <p class="muted small" data-i18n="settings.sub">Everything runs on your own machine.</p>
         </div>
       </header>
       <div class="settings-body" id="settings-body"></div>

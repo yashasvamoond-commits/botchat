@@ -1,7 +1,9 @@
+import { foldDigits, transliterate } from './script.js';
+
 /** Small shared text helpers. No dependencies. */
 
 export function slugify(input, { max = 60, sep = '-' } = {}) {
-  const ascii = String(input || '')
+  const ascii = transliterate(String(input || ''))
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[₹]/g, 'Rs ')
@@ -45,7 +47,12 @@ const ABBREVIATIONS = /(?:\b(?:mr|mrs|ms|dr|shri|smt|sr|jr|no|nos|sec|secs|vs|ad
 
 export function sentences(text) {
   const clean = String(text || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ');
-  const rough = clean.split(/(?<=[.!?])\s+(?=[A-Z(0-9"'“])/g);
+  // A heading on its own line is its own sentence; so is a danda (।) or an
+  // Urdu full stop (۔), which end sentences just like a full stop.
+  const rough = clean
+    .split(/\n+/)
+    .filter((line) => line.trim())
+    .flatMap((line) => line.split(/(?<=[.!?।۔])\s+(?=[A-Z(0-9"'“]|[\u0900-\u097F]|[\u0600-\u06FF])/g));
   const merged = [];
   for (const part of rough) {
     const last = merged[merged.length - 1];
@@ -66,14 +73,21 @@ export function paragraphs(text) {
 }
 
 export function words(text) {
-  return String(text || '').toLowerCase().match(/[a-z0-9\u0900-\u097F]+/g) || [];
+  return String(text || '').toLowerCase().match(/[a-z0-9\u0900-\u097F\u0600-\u06FF]+/g) || [];
 }
 
 /** Strip diacritics, normalise quotes/dashes, lowercase. */
 export function normalize(input) {
-  return String(input || '')
+  return foldDigits(String(input || ''))
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
+    // Arabic/Urdu: drop vowel marks and tatweel, unify letter shapes so a query
+    // typed on one keyboard still matches a document typed on another.
+    .replace(/[\u064B-\u065F\u0670\u0640\u200c\u200d]/g, '')
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ہ')
     .replace(/[’‘]/g, "'")
     .replace(/[“”]/g, '"')
     .replace(/[–—]/g, '-')

@@ -60,6 +60,22 @@ export function interpret(raw, { pending = null, hasResults = false } = {}) {
   }
   if (/^(?:undo|revert|wapas|wapis|peeche)\b/i.test(text)) return { intent: 'undo' };
 
+  // ── eCourts memory ────────────────────────────────────────────────────────
+  const cnrOnly = /\b([A-Z]{2}[A-Z0-9]{2}\d{12,16})\b/i.exec(text);
+  if (cnrOnly) return { intent: 'ecourts_case', query: cnrOnly[1].toUpperCase() };
+  if (/^(?:e-?courts?|court\s*status|case\s*status|my\s+court\s+cases|ई-?कोर्ट|कोर्ट\s*स्टेटस|मेरे\s*कोर्ट\s*केस|ای-?کورٹ|کیس\s*اسٹیٹس|میرے\s*عدالتی\s*کیسز)\s*$/i.test(text)) {
+    return { intent: 'ecourts' };
+  }
+  const ecourtsQuery = /^(?:e-?courts?|court\s*status|case\s*status|ई-?कोर्ट|کوٹ\s*سٹیٹس|ای-?کورٹ)\s+(.+)$/i.exec(text);
+  if (ecourtsQuery) return { intent: 'ecourts', query: collapse(ecourtsQuery[1]) };
+  if (/^(?:next\s+hearings?|upcoming\s+hearings?|hearing\s+(?:dates?|diary)|court\s+diary|अगली\s+सुनवाई|सुनवाई\s+की\s+तारीख(?:ें)?|اگلی\s+سماعت|سماعت\s+کی\s+تاریخیں?)\s*$/i.test(text)) {
+    return { intent: 'hearings' };
+  }
+  const caseStatus = /^(?:case|cases?)\s+(?:no\.?|number|status)?\s*[:\-]?\s*(.+)$/i.exec(text);
+  if (caseStatus && /\d/.test(caseStatus[1]) && /\//.test(caseStatus[1])) {
+    return { intent: 'ecourts_case', query: collapse(caseStatus[1]) };
+  }
+
   // ── stats ─────────────────────────────────────────────────────────────────
   if (/^(?:stats?|status|library|how\s+many\s+(?:documents?|files?)|kitne\s+(?:documents?|files?)|total)\b/i.test(text)
     || /what\s+(?:documents?|files?)\s+do\s+i\s+have/i.test(text)) {

@@ -14,6 +14,9 @@ import { searchDocuments, bestPassage, findRelated } from '../search/search.js';
 import { parseQuery } from '../search/queryParser.js';
 import { classifyDocument } from '../analysis/classify.js';
 import { ingestFile, syncDocFile } from '../ingest/pipeline.js';
+import { importEcourtsUpload } from '../ingest/ecourts.js';
+import { handleEcourts, ecourtsCard } from './ecourts.js';
+import { ecourtsSummary } from '../store/ecourts.js';
 import { buildBundle, absolutePathOf } from '../bundle/builder.js';
 import { createDraftDocument, DRAFT_TEMPLATES } from '../draft/generator.js';
 import { llmAnswerQuestion } from '../analysis/llm.js';
@@ -111,6 +114,19 @@ export async function handleMedia({ owner, message, send, downloadMedia, phoneNa
     log.error('media download failed', err.message);
     await sendText(send, '⚠️ WhatsApp did not let me download that file. Please try sending it again.');
     return;
+  }
+
+  // An eCourts .txt dump is remembered permanently instead of being filed as a paper.
+  if (/\.txt$/i.test(filename) || /^text\/plain/i.test(message.mime || '')) {
+    try {
+      const imported = importEcourtsUpload({ owner, buffer, filename });
+      if (imported.handled) {
+        await sendText(send, imported.message);
+        return;
+      }
+    } catch (err) {
+      log.warn('ecourts import failed:', err.message);
+    }
   }
 
   try {
@@ -211,6 +227,13 @@ export async function handleText({ owner, text, send, phoneName = '' }) {
         return sendText(send, '🙏 Anytime. Your files are all in order.');
       case 'stats':
         return sendStats({ owner, send });
+      case 'ecourts':
+        await sendText(send, '⚖️ Looking in your remembered eCourts data…');
+        return handleEcourts({ owner, intent: 'ecourts', query: intent.query || '', send });
+      case 'hearings':
+        return handleEcourts({ owner, intent: 'hearings', send });
+      case 'ecourts_case':
+        return handleEcourts({ owner, intent: 'ecourts_case', query: intent.query, send });
       case 'list_cases':
         return sendText(send, matterListMessage(ownerMatters(owner).filter((m) => m.status === 'active'), { totalDocs: stats(owner).total }));
       case 'new_case':
@@ -451,7 +474,11 @@ async function sendStats({ owner, send }) {
     lines.push('', '*Next dates*');
     deadlines.forEach((d, i) => lines.push(deadlineLine(d, i + 1)));
   }
-  lines.push('', 'Type `cases`, `deadlines`, or just ask for a document.');
+  const courts = ecourtsSummary(owner);
+  if (courts.total) {
+    lines.push(`⚖️ ${plural(courts.total, 'eCourts case')} remembered${courts.nextDate ? ` · next hearing ${formatDate(courts.nextDate)}` : ''}`);
+  }
+  lines.push('', 'Type `cases`, `deadlines`, `ecourts`, or just ask for a document.');
   await sendText(send, lines.join('\n'));
 }
 

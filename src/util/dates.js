@@ -1,3 +1,42 @@
+import { foldDigits } from './script.js';
+
+/* ── Hindi / Urdu month names and date phrases ─────────────────────────────── */
+
+export const LOCAL_MONTH_WORDS = {
+  'जनवरी': 0, 'जन': 0, 'फ़रवरी': 1, 'फरवरी': 1, 'मार्च': 2, 'अप्रैल': 3, 'मई': 4,
+  'जून': 5, 'जुलाई': 6, 'अगस्त': 7, 'सितंबर': 8, 'सितम्बर': 8, 'अक्टूबर': 9,
+  'अक्तूबर': 9, 'नवंबर': 10, 'नवम्बर': 10, 'दिसंबर': 11, 'दिसम्बर': 11,
+  'جنوری': 0, 'فروری': 1, 'مارچ': 2, 'اپریل': 3, 'مئی': 4, 'جون': 5, 'جولائی': 6,
+  'اگست': 7, 'ستمبر': 8, 'اکتوبر': 9, 'نومبر': 10, 'دسمبر': 11,
+};
+const EN_MONTH_NAMES = ['january', 'february', 'march', 'april', 'may', 'june', 'july',
+  'august', 'september', 'october', 'november', 'december'];
+
+/**
+ * Prepare text for the date parsers: fold ०/٠ digits to ASCII and swap
+ * Hindi/Urdu month names for English ones so one set of patterns covers all three.
+ */
+export function localizeDateText(input) {
+  let text = foldDigits(String(input || ''));
+  for (const [word, index] of Object.entries(LOCAL_MONTH_WORDS)) {
+    if (text.includes(word)) text = text.split(word).join(EN_MONTH_NAMES[index]);
+  }
+  return text
+    .replace(/\b(?:ईस्वी|ई\.|ईसवी)\b/g, '')
+    .replace(/\b(?:سنہ|سن)\b/g, '')
+    .replace(/[\u060C\u061B]/g, ',')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Month index (0-11) for an English, Hindi or Urdu month word. */
+export function monthIndexOf(word) {
+  const w = String(word || '').trim().toLowerCase();
+  if (!w) return undefined;
+  if (LOCAL_MONTH_WORDS[String(word || '').trim()] !== undefined) return LOCAL_MONTH_WORDS[String(word || '').trim()];
+  return MONTH_ALIASES[w];
+}
+
 /** Date parsing and formatting. Deliberately India-first (dd/mm/yyyy, IST). */
 
 export const MONTHS = [
@@ -66,7 +105,7 @@ export function relativeDay(iso) {
 
 /** Parse one of many date writings. Returns { iso, confident }. */
 export function parseDate(input, { now = new Date() } = {}) {
-  const s = String(input || '').trim();
+  const s = localizeDateText(String(input || '').trim()).replace(/[.,]$/, '');
   if (!s) return null;
 
   // 2024-05-12
@@ -122,7 +161,7 @@ function build(year, month, day) {
 /** Find all dates in a block of text, with surrounding context. */
 export function findDates(text, { now = new Date() } = {}) {
   const found = [];
-  const source = String(text || '');
+  const source = localizeDateText(String(text || ''));
   const patterns = [
     /\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:day\s+of\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)[\s,.-]+(\d{4})\b/gi,
     /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?[\s,.-]+(\d{4})\b/gi,
@@ -164,35 +203,37 @@ export function findDates(text, { now = new Date() } = {}) {
 
 /** Human-friendly date range for a phrase like "last month". */
 export function relativeRange(phrase, { now = new Date() } = {}) {
-  const p = String(phrase || '').toLowerCase().trim();
+  // Local month names ("अप्रैल 2026", "اپریل 2026") are understood as English.
+  const p = localizeDateText(String(phrase || '')).toLowerCase().trim();
   const y = now.getFullYear();
   const mo = now.getMonth();
   const iso = (d) => toIso(d);
   const mk = (y2, m2, d2) => new Date(y2, m2, d2);
-  if (/^(today|aaj)$/.test(p)) return { from: iso(now), to: iso(now), label: 'today' };
-  if (/^yesterday$/.test(p)) return { from: iso(mk(y, mo, now.getDate() - 1)), to: iso(mk(y, mo, now.getDate() - 1)), label: 'yesterday' };
-  if (/^(this week|is hafte)$/.test(p)) {
+  if (/^(today|aaj|आज|آج|آج\s*کے\s*دن)$/.test(p)) return { from: iso(now), to: iso(now), label: 'today' };
+  if (/^(yesterday|kal|कल|کل|پچھلے\s*دن)$/.test(p)) return { from: iso(mk(y, mo, now.getDate() - 1)), to: iso(mk(y, mo, now.getDate() - 1)), label: 'yesterday' };
+  if (/^(this week|is hafte|इस\s*हफ़्ते|इस\s*हफ्ते|اس\s*ہفتے)$/.test(p)) {
     const day = now.getDay();
     const start = mk(y, mo, now.getDate() - day);
     return { from: iso(start), to: iso(now), label: 'this week' };
   }
-  if (/^(last week|previous week)$/.test(p)) {
+  if (/^(last week|previous week|पिछले\s*हफ़्ते|पिछले\s*हफ्ते|گزشتہ\s*ہفتے|پچھلے\s*ہفتے)$/.test(p)) {
     const day = now.getDay();
     const end = mk(y, mo, now.getDate() - day - 1);
     const start = mk(y, mo, end.getDate() - 6);
     return { from: iso(start), to: iso(end), label: 'last week' };
   }
-  if (/^(this month|is mahine)$/.test(p)) return { from: iso(mk(y, mo, 1)), to: iso(now), label: 'this month' };
-  if (/^(last month|previous month|pichle mahine)$/.test(p)) {
+  if (/^(this month|is mahine|इस\s*महीने|इस\s*माह|اس\s*ماہ|اس\s*مہینے)$/.test(p)) return { from: iso(mk(y, mo, 1)), to: iso(now), label: 'this month' };
+  if (/^(last month|previous month|pichle mahine|पिछले\s*महीने|पिछले\s*माह|گزشتہ\s*ماہ|پچھلے\s*مہینے)$/.test(p)) {
     const start = mk(y, mo - 1, 1);
     const end = mk(y, mo, 0);
     return { from: iso(start), to: iso(end), label: 'last month' };
   }
-  if (/^(this year|is saal)$/.test(p)) return { from: `${y}-01-01`, to: iso(now), label: 'this year' };
-  if (/^(last year|previous year|pichle saal)$/.test(p)) return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31`, label: 'last year' };
+  if (/^(this year|is saal|इस\s*साल|اس\s*سال)$/.test(p)) return { from: `${y}-01-01`, to: iso(now), label: 'this year' };
+  if (/^(last year|previous year|pichle saal|पिछले\s*साल|گزشتہ\s*سال|پچھلے\s*سال)$/.test(p)) return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31`, label: 'last year' };
+  const monthPhrase = p.replace(/\s+/g, ' ').trim();
   const mm = /^(?:in\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:\s+(\d{4}))?$/.exec(p);
   if (mm) {
-    const m2 = MONTH_ALIASES[mm[1].toLowerCase()];
+    const m2 = monthIndexOf(mm[1]);
     const y2 = mm[2] ? +mm[2] : y;
     const start = mk(y2, m2, 1);
     const end = mk(y2, m2 + 1, 0);

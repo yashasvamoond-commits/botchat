@@ -1,5 +1,16 @@
 import { findDates, parseDate, addDays, toIso } from '../util/dates.js';
 import { collapse, normalize, titleCase, clip } from '../util/text.js';
+import { foldDigits, scriptLanguage, hasDevanagari, hasArabic } from '../util/script.js';
+import {
+  extractLocalParties, extractLocalCaseNumbers, extractLocalCourt, extractLocalStatutes, isLocalName,
+} from './localized.js';
+
+/** Prepare money text: ASCII digits, plain commas, and "रु"/"روپے" forms kept intact. */
+function localizeAmountText(input) {
+  return foldDigits(input)
+    .replace(/[\u060C\u066B\u066C]/g, ',')
+    .replace(/(\d)\s*\/\s*-/g, '$1/-');
+}
 
 const HONORIFIC = /(?:Mr|Mrs|Ms|Dr|Shri|Shrimati|Smt|Late|M\/s|Messrs)\.?/i;
 
@@ -127,6 +138,8 @@ function hasHonorific(text) {
 function looksLikeName(text) {
   const t = cleanName(text);
   if (!t || t.length < 3 || t.length > 80) return false;
+  // Devanagari / Arabic-script names have no capital letters to check.
+  if (!/[A-Za-z]/.test(t) && (hasDevanagari(t) || hasArabic(t))) return isLocalName(t);
   if (/\d{4}/.test(t)) return false;
   if (/[;:!?]$/.test(t)) return false;
   if (/\.\.\.|…/.test(t)) return false;
@@ -301,6 +314,23 @@ export function extractParties(text) {
     add(match[1], roleInSegment(match[0]), 'company', 1.5, match.index);
   }
 
+  // Hindi / Urdu drafting uses its own joins, headings and role words: merge them
+  // in before the ranking so a "… के बीच …" party outranks a passing mention.
+  for (const local of extractLocalParties(source)) {
+    const key = normalize(local.name).replace(/[^\p{L}\p{N}]/gu, '');
+    if (key.length < 3) continue;
+    const existing = found.get(key);
+    if (existing) {
+      if (!existing.role && local.role) existing.role = local.role;
+      if (local.priority > existing.wherePriority) {
+        existing.where = local.where;
+        existing.wherePriority = local.priority;
+      }
+      continue;
+    }
+    found.set(key, { name: local.name, role: local.role || null, where: local.where, wherePriority: local.priority, index: local.index });
+  }
+
   const ordered = [...found.values()].sort((a, b) => (b.wherePriority - a.wherePriority) || (a.index - b.index));
 
   // Keep the list focused: when the document states parties clearly, ignore incidental names.
@@ -322,32 +352,81 @@ export function extractParties(text) {
   return parties;
 }
 
+const SENTENCE_ABBREV = /(?:^|\s)(?:no|nos|rs|inr|sec|sect|vs|mr|mrs|ms|dr|adv|hon|pvt|ltd|co|sl|dt|smt|shri|संख्य|क्र|दि|श्री|अनु)["')\]]?\.$/i;
+
+/** Start of the sentence/clause that contains `from` (ignores "No." and "Rs." dots). */
+function sentenceStartBefore(source, from, limit) {
+  for (let i = from - 1; i >= limit; i--) {
+    const ch = source[i];
+    if (ch === '।' || ch === '۔' || ch === ';' || ch === '\n') return i + 1;
+    if (ch !== '.') continue;
+    const tail = source.slice(Math.max(0, i - 14), i + 1);
+    if (SENTENCE_ABBREV.test(tail)) continue;
+    if (/\d\.$/.test(tail)) continue;
+    if (i > 0 && /\d/.test(source[i - 1]) && /\d/.test(source[i + 1] || '')) continue;
+    return i + 1;
+  }
+  return limit;
+}
+
+function sentenceEndAfter(source, from, limit) {
+  for (let i = from; i < limit; i++) {
+    const ch = source[i];
+    if (ch === '।' || ch === '۔' || ch === ';' || ch === '\n') return i;
+    if (ch !== '.') continue;
+    const tail = source.slice(Math.max(0, i - 14), i + 1);
+    if (SENTENCE_ABBREV.test(tail)) continue;
+    if (/\d\.$/.test(tail) && /\d/.test(source[i + 1] || '')) continue;
+    return i;
+  }
+  return limit;
+}
+
 /** Money amounts with both raw text and numeric value. */
 export function extractAmounts(text) {
-  const source = String(text || '');
+  const source = localizeAmountText(String(text || ''));
   const out = [];
-  const re = /(?<![A-Za-z])(?:Rs\.?|INR|₹)\s*([\d][\d,]*(?:\.\d{1,2})?)\s*(lakh|lakhs|lac|lacs|crore|crores|thousand|k)?\s*(-\/-)?/gi;
-  let m;
-  while ((m = re.exec(source))) {
-    const digits = Number(m[1].replace(/,/g, ''));
-    if (!Number.isFinite(digits)) continue;
+  const covered = [];
+  const WINDOW = 120;
+
+  const push = (match, digitsRaw, unitRaw) => {
+    const start = match.index;
+    const end = match.index + match[0].length;
+    if (covered.some(([a, b]) => start < b && end > a)) return;
+    covered.push([start, end]);
+    const digits = Number(String(digitsRaw).replace(/,/g, ''));
+    if (!Number.isFinite(digits) || digits <= 0) return;
     let value = digits;
-    const unit = (m[2] || '').toLowerCase();
-    if (unit.startsWith('lakh') || unit.startsWith('lac')) value = digits * 100000;
-    else if (unit.startsWith('crore')) value = digits * 10000000;
-    else if (unit.startsWith('thousand') || unit === 'k') value = digits * 1000;
-    const windowStart = Math.max(0, m.index - 110);
-    const context = collapse(source.slice(windowStart, m.index + m[0].length + 110));
-    const prettyRaw = collapse(m[0]).replace(/^(?:rs\.?|inr)/i, 'Rs.');
-    const anchor = Math.min(context.length, m.index - windowStart + 20);
+    const unit = String(unitRaw || '').toLowerCase();
+    if (/^(?:lakh|lac|लाख|لاکھ)/.test(unit)) value = digits * 100000;
+    else if (/^(?:crore|करोड़|करोड|کروڑ)/.test(unit)) value = digits * 10000000;
+    else if (/^(?:thousand|k$|हज़ार|ہزار)/.test(unit)) value = digits * 1000;
+
+    // Look at the sentence around the figure only, so a label from the next
+    // clause cannot claim it ("… deposit 1,00,000. Rent 25,000 …").
+    const windowStart = Math.max(0, start - WINDOW);
+    const sentStart = sentenceStartBefore(source, start, windowStart);
+    const sentEnd = sentenceEndAfter(source, end, end + WINDOW);
+    const context = collapse(source.slice(sentStart, sentEnd));
+    const anchor = Math.min(context.length, start - sentStart + Math.floor(String(digitsRaw).length / 2));
     out.push({
-      raw: prettyRaw,
+      raw: collapse(match[0]).replace(/^(?:rs\.?|inr)/i, 'Rs.'),
       value,
       context,
       label: guessAmountLabel(context, anchor),
     });
-  }
-  // Deduplicate: same figure and same meaning appears once.
+  };
+
+  // "Rs. 25,000", "₹1,00,000/-", "रु. 25,000", "روپے 50,000"
+  const prefix = /(?<![A-Za-z\u0900-\u097F\u0600-\u06FF])(?:Rs\.?|INR|₹|रु\.?|रुपये|रुपए|روپے|روپیہ)\s*([\d][\d,]*(?:\.\d{1,2})?)\s*(lakh|lakhs|lac|lacs|crore|crores|thousand|k|लाख|लाखों|करोड़|करोड|करोड़ों|لاکھ|کروڑ|ہزار)?\s*(?:\/-)?/gi;
+  let m;
+  while ((m = prefix.exec(source))) push(m, m[1], m[2]);
+
+  // "25,000 रुपये", "50,000 روپے", "18,000/-" — the Indian postfix style
+  const postfix = /([\d][\d,]*(?:\.\d{1,2})?)\s*(?:\/-|रुपये|रु\.?|روپے|روپیہ)(?!\s*[\d])/g;
+  while ((m = postfix.exec(source))) push(m, m[1], '');
+
+  // Deduplicate: the same figure means the same thing once.
   const seen = new Set();
   return out.filter((a) => {
     const key = String(a.value);
@@ -358,12 +437,12 @@ export function extractAmounts(text) {
 }
 
 const AMOUNT_LABELS = [
-  { re: /security\s+deposit|interest[- ]free\s+(?:refundable\s+)?(?:security\s+)?deposit|advance\s+deposit/i, label: 'Security deposit' },
-  { re: /monthly\s+rent|rent\s+(?:of|is|payable)|\brent\b/i, label: 'Rent' },
+  { re: /security\s+deposit|interest[- ]free\s+(?:refundable\s+)?(?:security\s+)?deposit|advance\s+deposit|जमा\s*राशि|अमानत|ضمانتی\s*رقم|امانت/i, label: 'Security deposit' },
+  { re: /monthly\s+rent|rent\s+(?:of|is|payable)|\brent\b|मासिक\s*किराया|किराया|प्रतिमाह|ماہانہ\s*کرایہ|کرایہ/i, label: 'Rent' },
   { re: /sale\s+consideration|total\s+consideration|purchase\s+price|sale\s+price/i, label: 'Sale consideration' },
-  { re: /damages|compensation|claim/i, label: 'Claim amount' },
-  { re: /cheque|dishonou?r/i, label: 'Cheque amount' },
-  { re: /\bfee\b|honorarium|professional\s+fee/i, label: 'Fee' },
+  { re: /damages|compensation|claim|मुआवजा|हर्जाना|ہرجانہ|معاوضہ/i, label: 'Claim amount' },
+  { re: /cheque|dishonou?r|चेक|चैक|چیک/i, label: 'Cheque amount' },
+  { re: /\bfee\b|honorarium|professional\s+fee|फीस|शुल्क|فیس/i, label: 'Fee' },
   { re: /penalty|interest|\bIGST\b|\bCGST\b|\bSGST\b|\bGST\b/i, label: 'Tax / penalty' },
   { re: /salary|wages|remuneration/i, label: 'Salary' },
   { re: /\bloan\b|principal\s+amount/i, label: 'Loan amount' },
@@ -382,8 +461,11 @@ function guessAmountLabel(context, amountIndex = -1) {
     let m;
     while ((m = re.exec(text))) {
       const distance = Math.abs(m.index - anchor);
-      if (distance < bestDistance) {
-        bestDistance = distance;
+      // A label written before the figure ("security deposit of Rs 1,00,000")
+      // is a stronger signal than one that merely follows it.
+      const weighted = m.index < anchor ? distance : distance * 2;
+      if (weighted < bestDistance) {
+        bestDistance = weighted;
         best = entry.label;
       }
       if (m.index === re.lastIndex) re.lastIndex += 1;
@@ -400,6 +482,9 @@ export function extractReferences(text) {
   const caseRe = /\b(?:O\.?\s?S\.?|C\.?\s?S\.?|R\.?\s?S\.?\s?A\.?|Crl\.?\s?A\.?|Crl\.?\s?M\.?P\.?|W\.?\s?P\.?|C\.?\s?M\.?\s?P\.?|I\.?\s?A\.?|R\.?\s?F\.?\s?A\.?|C\.?\s?M\.?\s?A\.?|S\.?\s?B\.?\s?C\.?|C\.?\s?C\.?|C\.?\s?O\.?\s?M\.?\s?P\.?|ARB\.?|A\.?\s?P\.?|L\.?\s?P\.?\s?A\.?)\s*(?:No\.?\s*)?(\d{1,6})\s*(?:of|\/)\s*(\d{4})/gi;
   let m;
   while ((m = caseRe.exec(source))) refs.caseNumbers.push(collapse(m[0]));
+  for (const local of extractLocalCaseNumbers(source)) {
+    if (!refs.caseNumbers.some((existing) => normalize(existing) === normalize(local))) refs.caseNumbers.push(local);
+  }
   const caseNoRe = /\b(?:case|suit|appeal|petition|application|complaint|petitioner|misc\.?)\s+(?:no\.?\s*)?([A-Z0-9\/\-]{2,20})/gi;
   while ((m = caseNoRe.exec(source))) {
     const value = collapse(m[0]);
@@ -446,7 +531,8 @@ export function extractCourt(text) {
     }
     if (pattern.name) return pattern.name;
   }
-  return null;
+  // Hindi / Urdu court names ("उच्च न्यायालय", "ضلع و سیشن عدالت").
+  return extractLocalCourt(source);
 }
 
 /** Acts and sections cited. */
@@ -464,6 +550,7 @@ export function extractStatutes(text) {
     const act = normalizeAct(m[1]);
     if (!out.some((s) => s.act === act && !s.section)) out.push({ section: null, act, raw: m[1] });
   }
+  for (const local of extractLocalStatutes(source)) out.push(local);
   const seen = new Set();
   return out
     .filter((s) => {
@@ -621,7 +708,8 @@ export function extractDocumentDate(text, { filename = '' } = {}) {
     }
   };
 
-  collect(/(?:^|\n)\s*(?:date|dated)\s*[:\-]?\s*([0-9]{1,2}(?:st|nd|rd|th)?[\s\w,.\-]{2,26}\d{4})/gi, 4);
+  collect(/(?:^|\n)\s*(?:date|dated|दिनांक|तारीख|تاریخ)\s*[:\-]?\s*([0-9]{1,2}(?:st|nd|rd|th)?[\s\w,.\-]{2,26}\d{4})/gi, 4);
+  collect(/(?:दिनांकित|तारीख|تاریخ)\s*[:\-]?\s*([0-9]{1,2}[\s\w,.\-]{2,26}\d{4})/gi, 4);
   collect(/this\s+(\d{1,2}(?:st|nd|rd|th)?\s+day\s+of\s+[A-Za-z]+[,\s]+\d{4})/gi, 4);
   collect(/(?:dated|executed\s+(?:at\s+\w+\s+)?on|made\s+(?:at\s+\w+\s+)?on|entered\s+into\s+on)\s*[:\-]?\s*([0-9]{1,2}(?:st|nd|rd|th)?[\s\w,.\-]{2,26}\d{4})/gi, 2);
 
@@ -652,12 +740,7 @@ export function extractDocumentDate(text, { filename = '' } = {}) {
 }
 
 export function detectLanguage(text) {
-  const sample = String(text || '').slice(0, 4000);
-  const devanagari = (sample.match(/[\u0900-\u097F]/g) || []).length;
-  const latin = (sample.match(/[A-Za-z]/g) || []).length;
-  if (devanagari > latin * 0.5 && devanagari > 20) return 'hi';
-  if (devanagari > 20) return 'mixed';
-  return 'en';
+  return scriptLanguage(String(text || '').slice(0, 8000));
 }
 
 /** Blank fields that still need filling in — useful before sending a draft out. */
