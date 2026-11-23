@@ -33,10 +33,23 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
+// Framing policy.
+// A same-origin-only policy (X-Frame-Options: SAMEORIGIN) makes the app refuse to
+// render inside the hosted preview pane, which shows the dashboard in an iframe
+// from another origin. By default we therefore send no framing header at all —
+// the app is already gated by the access code — and a deployment can lock this
+// down with FRAME_ANCESTORS (e.g. "self", or "https://docs.example.com").
+const frameAncestors = String(process.env.FRAME_ANCESTORS || '').trim();
+
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  if (frameAncestors === 'self') {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  } else if (frameAncestors) {
+    res.setHeader('Content-Security-Policy', `frame-ancestors ${frameAncestors}`);
+  }
   next();
 });
 
@@ -533,7 +546,17 @@ app.get('/healthz', (_req, res) => {
 /* ───────────────────────────── static UI ───────────────────────────── */
 
 const publicDir = path.join(ROOT, 'public');
-app.use(express.static(publicDir, { extensions: ['html'], maxAge: '1h' }));
+app.use(express.static(publicDir, {
+  extensions: ['html'],
+  maxAge: '1h',
+  // The shell, the worker and the manifest must always revalidate, otherwise a
+  // phone can keep an old UI pinned in its cache for an hour after an update.
+  setHeaders: (res, filePath) => {
+    if (/(?:index\.html|sw\.js|manifest\.webmanifest)$/.test(filePath)) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  },
+}));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/webhook')) return next();
   res.sendFile(path.join(publicDir, 'index.html'));

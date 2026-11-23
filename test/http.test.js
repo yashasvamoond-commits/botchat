@@ -26,6 +26,14 @@ test.after(() => {
   server.close();
 });
 
+test('the dashboard can be embedded in the hosted preview pane', async () => {
+  const res = await api('/');
+  assert.equal(res.status, 200);
+  // A SAMEORIGIN frame policy blocks the preview iframe from rendering the app.
+  assert.equal(res.headers.get('x-frame-options'), null);
+  assert.match(res.headers.get('cache-control') || '', /no-cache/);
+});
+
 test('the health probe answers without a login', async () => {
   const res = await api('/healthz');
   assert.equal(res.status, 200);
