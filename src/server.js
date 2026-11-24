@@ -538,6 +538,23 @@ api.get('/codes', (_req, res) => {
 
 app.use('/api', api);
 
+// The downloadable single-file app (built by `npm run build:offline`).
+// /offline opens it in the browser; /download saves it, so it can be kept on a
+// phone and used with no server at all.
+const OFFLINE_FILE = path.join(ROOT, 'downloads', 'X-Document-Manager.html');
+const offlineReady = () => fs.existsSync(OFFLINE_FILE);
+
+app.get('/offline', (_req, res) => {
+  if (!offlineReady()) return res.status(404).type('text').send('Offline build missing — run: npm run build:offline');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.sendFile(OFFLINE_FILE);
+});
+
+app.get('/download', (_req, res) => {
+  if (!offlineReady()) return res.status(404).type('text').send('Offline build missing — run: npm run build:offline');
+  res.download(OFFLINE_FILE, 'X-Document-Manager.html');
+});
+
 // Public liveness probe — used by hosting health checks and mobile bookmarklets.
 app.get('/healthz', (_req, res) => {
   res.json({ ok: true, app: 'x-document-manager', startedAt: startedAt.toISOString() });

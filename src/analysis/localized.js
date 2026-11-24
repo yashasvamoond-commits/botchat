@@ -62,6 +62,9 @@ const DATE_OR_MONTH = new Set([
   'तारीख', 'दिनांक', 'तिथि', 'تاریخ', 'ईस्वी', 'ईसवी', 'سن',
 ]);
 
+// Titles of documents, never people.
+const HEADING_LINE = /^(?:किराया|विक्रय|शपथ|वकालतनामा|नोटिस|सूचना|वाद|अनुबंध|समझौता|प्रार्थना|आवेदन|अधिकार\s*पत्र|اقرار|معاہدہ|نوٹس|قانونی|درخواست|مقدمہ|بیع|حلف|کرایہ|ہبہ|رہن|تقسیم|وصیت|مختار|بیعانہ|شراکت|ملازمت)/i;
+
 export function isLocalName(raw) {
   const name = collapse(String(raw || ''))
     .replace(/^[,;:\-\u2013\u2014()"'।\s]+/, '')
@@ -74,6 +77,7 @@ export function isLocalName(raw) {
   if (/\d{3,}/.test(name)) return false;
   if (/[:：]/.test(name)) return false;
   if (words.every((w) => DATE_OR_MONTH.has(w.replace(/[।۔,]/g, '')))) return false;
+  if (words.length <= 3 && HEADING_LINE.test(name)) return false;
   if (/[।۔]/.test(name)) return false;
   if (/(?:है|हैं|किया|करना|ہے|ہیں|کیا|کرنا)$/.test(name)) return false;
   return true;
@@ -82,8 +86,12 @@ export function isLocalName(raw) {
 /** Drop "पुत्र श्री …", "साकिन …", "(किरायेदार)" and similar from a captured name. */
 const ROLE_TAIL = /\s*(?:\.{2,}|…)?\s*(?:वादी|प्रतिवादी|अभियुक्त|आरोपी|याचिकाकर्ता|आवेदक|गवाह|साक्षी|पक्ष|مدعی|مدعا\s*علیہ|ملزم|گواہ|فریق)\s*$/i;
 
+// "को श्री राजेश शर्मा", "اور جناب …" — drafting particles that belong to the
+// sentence, not to the name.
+const LEADING_PARTICLE = /^(?:को|तथा|और|एवं|के|की|का|से|منجانب|کی|اور|کے|سے|کو)\s+/i;
+
 export function cleanLocalName(raw) {
-  return collapse(String(raw || ''))
+  let name = collapse(String(raw || ''))
     .replace(/\([^)]*\)/g, ' ')
     .replace(ROLE_TAIL, '')
     .replace(/\s*(?:\.{2,}|…)\s*$/, '')
@@ -92,11 +100,14 @@ export function cleanLocalName(raw) {
     .replace(/\s*[-–—,]+\s*$/, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
+  while (LEADING_PARTICLE.test(name)) name = name.replace(LEADING_PARTICLE, '');
+  // A trailing one-letter fragment means the capture cut a connective in half.
+  name = name.replace(/\s+[\u0900-\u097F\u0600-\u06FF]$/, '').trim();
+  return name;
 }
 
 /* ── parties ───────────────────────────────────────────────────────────────── */
 
-const HEADING_LINE = /^(?:किराया|विक्रय|शपथ|वकालतनामा|नोटिस|सूचना|वाद|अनुबंध|समझौता|प्रार्थना|आवेदन|अधिकार\s*पत्र|اقرار|معاہدہ|نوٹس|قانونی|درخواست|مقدمہ|بیع|حلف)/i;
 
 /**
  * The name at the end of a drafting chunk: "… जयपुर में श्री राजेश शर्मा पुत्र श्री … (मकान मालिक)"

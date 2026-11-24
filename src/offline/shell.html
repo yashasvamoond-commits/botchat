@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f5132" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="X Docs" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="description" content="Offline legal document reader — English, Hindi and Urdu — with permanent eCourts memory. One file, no server." />
+<title>X Document Manager — offline</title>
+<style>
+/*__STYLES__*/
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <span class="mark">X</span>
+      <div>
+        <b>X Document Manager</b>
+        <small data-i18n="top.sub">Offline edition — works without a server</small>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="lang" id="lang">
+        <button data-lang="en" class="on">EN</button>
+        <button data-lang="hi">हिं</button>
+        <button data-lang="ur">اردو</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <nav class="tabs">
+    <button class="tab on" data-tab="docs" data-i18n="tab.docs">Documents</button>
+    <button class="tab" data-tab="courts" data-i18n="tab.courts">eCourts</button>
+    <button class="tab" data-tab="more" data-i18n="tab.more">Backup &amp; help</button>
+  </nav>
+
+  <!-- ── documents ─────────────────────────────────────────────── -->
+  <section class="pane on" id="pane-docs">
+
+    <div class="card">
+      <h2 data-i18n="add.title">Add a paper</h2>
+      <p class="muted small" data-i18n="add.note">Paste the text of a rent agreement, notice, order, affidavit — English, हिंदी or اردو. It is read on this phone; nothing is uploaded.</p>
+      <textarea id="paste" rows="6" data-i18n-ph="add.ph" placeholder="Paste the text here…"></textarea>
+      <div class="row">
+        <label class="btn ghost file" for="file">
+          <span data-i18n="add.file">Choose a .txt file</span>
+          <input id="file" type="file" accept=".txt,.md,.csv,text/plain" hidden />
+        </label>
+        <input id="name" class="grow" data-i18n-ph="add.name" placeholder="File name (optional)" />
+      </div>
+      <button class="btn primary block" id="save" data-i18n="add.save">Read and save</button>
+      <p class="muted small" id="add-hint"></p>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <input id="q" class="grow" data-i18n-ph="search.ph" placeholder="Ask: rent agreement Sharma, notices last month, पिछले महीने के नोटिस" />
+        <button class="btn" id="ask" data-i18n="search.go">Ask</button>
+      </div>
+      <p class="muted small" id="answer"></p>
+      <div id="results" class="list"></div>
+    </div>
+
+    <div id="card" class="card hidden"></div>
+  </section>
+
+  <!-- ── eCourts ───────────────────────────────────────────────── -->
+  <section class="pane" id="pane-courts">
+    <div class="card">
+      <h2 data-i18n="ec.title">eCourts memory</h2>
+      <p class="muted small" data-i18n="ec.note">Paste or choose the eCourts <b>Case Status</b> text once. Every CNR, court, stage and next hearing date is kept on this phone for good.</p>
+      <textarea id="ec-paste" rows="6" data-i18n-ph="ec.ph" placeholder="Paste the eCourts case status text here…"></textarea>
+      <div class="row">
+        <label class="btn ghost file" for="ec-file">
+          <span data-i18n="ec.file">Choose a .txt file</span>
+          <input id="ec-file" type="file" accept=".txt,.md,text/plain" hidden />
+        </label>
+        <button class="btn primary grow" id="ec-save" data-i18n="ec.save">Remember these cases</button>
+      </div>
+      <p class="muted small" id="ec-hint"></p>
+    </div>
+    <div class="card">
+      <div class="row">
+        <input id="ec-q" class="grow" data-i18n-ph="ec.search" placeholder="CNR number, party name, or “next hearing”" />
+        <button class="btn" id="ec-go" data-i18n="search.go">Ask</button>
+      </div>
+      <div id="ec-list" class="list"></div>
+    </div>
+  </section>
+
+  <!-- ── backup & help ─────────────────────────────────────────── -->
+  <section class="pane" id="pane-more">
+    <div class="card">
+      <h2 data-i18n="backup.title">Backup</h2>
+      <p class="muted small" data-i18n="backup.note">Everything on this phone, in one file you can keep or move to another device.</p>
+      <div class="row">
+        <button class="btn" id="export" data-i18n="backup.export">Download backup</button>
+        <label class="btn ghost file" for="import">
+          <span data-i18n="backup.import">Restore from backup</span>
+          <input id="import" type="file" accept=".json,application/json" hidden />
+        </label>
+      </div>
+      <p class="muted small" id="storage-note"></p>
+      <button class="btn danger" id="wipe" data-i18n="backup.wipe">Delete everything on this phone</button>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="help.title">What this can do</h2>
+      <ul class="help">
+        <li data-i18n="help.one">Read English, Hindi and Urdu papers: type, date, parties with roles, amounts, court, case numbers and sections.</li>
+        <li data-i18n="help.two">Search in any of the three languages — by party, type, month or year.</li>
+        <li data-i18n="help.three">Keep eCourts case status text forever: <code>ecourts</code>, <code>next hearing</code>, or a CNR number.</li>
+        <li data-i18n="help.four">No server, no account, no upload. PDF and Word files need the hosted version — here paste the text or send a .txt.</li>
+      </ul>
+      <p class="muted small" data-i18n="help.ios">Tip: in Safari tap Share → Add to Home Screen to keep it as an app.</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span data-i18n="foot.line">Runs entirely on this device.</span>
+    <span id="version"></span>
+  </footer>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/*__ENGINE__*/
+</script>
+<script>
+/*__APP__*/
+</script>
+</body>
+</html>

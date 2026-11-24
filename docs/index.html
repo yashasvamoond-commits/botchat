@@ -1,0 +1,4103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f5132" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="X Docs" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="description" content="Offline legal document reader — English, Hindi and Urdu — with permanent eCourts memory. One file, no server." />
+<title>X Document Manager — offline</title>
+<style>
+:root {
+  --ink: #14201a;
+  --soft: #46554c;
+  --muted: #77857d;
+  --paper: #f7f6f1;
+  --card: #ffffff;
+  --line: #e4e2d9;
+  --green: #0f5132;
+  --green-soft: #e7f0ea;
+  --amb: #a9761b;
+  --red: #a3352b;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font: 15px/1.55 var(--sans);
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-text-size-adjust: 100%;
+}
+html[lang="hi"] body { font-family: "Noto Sans Devanagari", "Kohinoor Devanagari", "Nirmala UI", var(--sans); }
+html[lang="ur"] body {
+  font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Segoe UI", Tahoma, var(--sans);
+  line-height: 1.9;
+}
+html[dir="rtl"] body { direction: rtl; }
+html[dir="rtl"] .lang { direction: ltr; }
+
+.app { max-width: 760px; margin: 0 auto; padding: calc(10px + var(--safe-top)) 14px calc(28px + var(--safe-bottom)); }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 2px 12px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mark {
+  width: 34px; height: 34px; border-radius: 10px; background: var(--green); color: #eaf6ee;
+  display: grid; place-items: center; font-weight: 700; font-size: 16px; flex: none;
+}
+.brand b { display: block; font-size: 15.5px; letter-spacing: -.2px; }
+.brand small { display: block; color: var(--muted); font-size: 11.5px; }
+
+.lang { display: inline-flex; gap: 2px; background: var(--green-soft); border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
+.lang button { border: 0; background: transparent; color: var(--soft); font: 600 11.5px/1 var(--sans); padding: 6px 8px; border-radius: 999px; }
+.lang button.on { background: var(--green); color: #eaf6ee; }
+
+.stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.pill { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 12px; color: var(--soft); }
+.pill b { color: var(--ink); }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.tab {
+  flex: 1; border: 1px solid var(--line); background: #fff; color: var(--soft);
+  border-radius: 11px; padding: 10px 8px; font: 600 13px/1 var(--sans);
+}
+.tab.on { background: var(--green); border-color: var(--green); color: #eaf6ee; }
+
+.pane { display: none; }
+.pane.on { display: block; }
+
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px; margin-bottom: 12px;
+}
+.card h2 { margin: 0 0 4px; font-size: 15px; letter-spacing: -.2px; }
+.card h3 { margin: 12px 0 6px; font-size: 13px; color: var(--soft); text-transform: uppercase; letter-spacing: .04em; }
+
+textarea, input[type="text"], input[type="search"] {
+  width: 100%; font: 16px/1.45 var(--sans); color: var(--ink);
+  background: #fbfaf6; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px;
+}
+textarea { resize: vertical; margin: 8px 0; }
+input:focus, textarea:focus { outline: 2px solid #cfe3d7; border-color: #b9d2c3; }
+
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+.grow { flex: 1 1 180px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font: 600 13.5px/1 var(--sans); color: var(--ink); background: #fff;
+  border: 1px solid var(--line); border-radius: 11px; padding: 11px 14px; min-height: 42px;
+  text-decoration: none; cursor: pointer;
+}
+.btn.primary { background: var(--green); border-color: var(--green); color: #eaf6ee; }
+.btn.ghost { background: #fbfaf6; }
+.btn.danger { color: var(--red); border-color: #e8cfcb; background: #fff8f7; }
+.btn.block { width: 100%; }
+.btn:active { transform: translateY(1px); }
+.file { position: relative; }
+
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+
+.list { display: grid; gap: 8px; margin-top: 6px; }
+.item {
+  border: 1px solid var(--line); border-radius: 11px; padding: 10px 12px; background: #fff;
+}
+.item b { font-size: 14px; }
+.item small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.item:hover { border-color: #cad9cf; }
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 2px; }
+.chip { font-size: 11.5px; background: var(--green-soft); color: #1c4b33; border-radius: 999px; padding: 3px 9px; }
+.chip.warn { background: #fdf3e0; color: #7a5512; }
+.chip.muted { background: #f0efe8; color: var(--soft); }
+
+dl.facts { margin: 8px 0 0; display: grid; grid-template-columns: 106px 1fr; gap: 4px 10px; font-size: 13.5px; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; }
+
+.amounts { display: grid; gap: 4px; margin: 6px 0; }
+.amounts div { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding: 3px 0; font-size: 13.5px; }
+
+.clause { border-left: 3px solid var(--green-soft); padding: 4px 0 4px 9px; margin: 6px 0; font-size: 13px; }
+html[dir="rtl"] .clause { border-left: 0; border-right: 3px solid var(--green-soft); padding: 4px 9px 4px 0; }
+.clause b { display: block; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--soft); }
+
+pre.raw {
+  white-space: pre-wrap; word-break: break-word; font: 13px/1.6 ui-monospace, "SF Mono", Menlo, monospace;
+  background: #fbfaf6; border: 1px solid var(--line); border-radius: 10px; padding: 10px; max-height: 320px; overflow: auto;
+}
+html[lang="ur"] pre.raw { font-family: "Noto Nastaliq Urdu", var(--sans); font-size: 14px; }
+
+.warnbox {
+  background: #fdf3e0; border: 1px solid #f0dcb4; color: #6b4c11;
+  border-radius: 11px; padding: 10px 12px; font-size: 13px; margin-bottom: 12px;
+}
+
+.help { margin: 6px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--soft); }
+.help li { margin: 5px 0; }
+code { background: #efeee7; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+.foot { text-align: center; color: var(--muted); font-size: 11.5px; margin-top: 14px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(18px + var(--safe-bottom)); transform: translate(-50%, 16px);
+  background: #1c2a22; color: #f3f8f4; padding: 10px 16px; border-radius: 999px; font-size: 13px;
+  opacity: 0; transition: .2s; pointer-events: none; max-width: 88vw; text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <span class="mark">X</span>
+      <div>
+        <b>X Document Manager</b>
+        <small data-i18n="top.sub">Offline edition — works without a server</small>
+      </div>
+    </div>
+    <div class="top-right">
+      <div class="lang" id="lang">
+        <button data-lang="en" class="on">EN</button>
+        <button data-lang="hi">हिं</button>
+        <button data-lang="ur">اردو</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <nav class="tabs">
+    <button class="tab on" data-tab="docs" data-i18n="tab.docs">Documents</button>
+    <button class="tab" data-tab="courts" data-i18n="tab.courts">eCourts</button>
+    <button class="tab" data-tab="more" data-i18n="tab.more">Backup &amp; help</button>
+  </nav>
+
+  <!-- ── documents ─────────────────────────────────────────────── -->
+  <section class="pane on" id="pane-docs">
+
+    <div class="card">
+      <h2 data-i18n="add.title">Add a paper</h2>
+      <p class="muted small" data-i18n="add.note">Paste the text of a rent agreement, notice, order, affidavit — English, हिंदी or اردو. It is read on this phone; nothing is uploaded.</p>
+      <textarea id="paste" rows="6" data-i18n-ph="add.ph" placeholder="Paste the text here…"></textarea>
+      <div class="row">
+        <label class="btn ghost file" for="file">
+          <span data-i18n="add.file">Choose a .txt file</span>
+          <input id="file" type="file" accept=".txt,.md,.csv,text/plain" hidden />
+        </label>
+        <input id="name" class="grow" data-i18n-ph="add.name" placeholder="File name (optional)" />
+      </div>
+      <button class="btn primary block" id="save" data-i18n="add.save">Read and save</button>
+      <p class="muted small" id="add-hint"></p>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <input id="q" class="grow" data-i18n-ph="search.ph" placeholder="Ask: rent agreement Sharma, notices last month, पिछले महीने के नोटिस" />
+        <button class="btn" id="ask" data-i18n="search.go">Ask</button>
+      </div>
+      <p class="muted small" id="answer"></p>
+      <div id="results" class="list"></div>
+    </div>
+
+    <div id="card" class="card hidden"></div>
+  </section>
+
+  <!-- ── eCourts ───────────────────────────────────────────────── -->
+  <section class="pane" id="pane-courts">
+    <div class="card">
+      <h2 data-i18n="ec.title">eCourts memory</h2>
+      <p class="muted small" data-i18n="ec.note">Paste or choose the eCourts <b>Case Status</b> text once. Every CNR, court, stage and next hearing date is kept on this phone for good.</p>
+      <textarea id="ec-paste" rows="6" data-i18n-ph="ec.ph" placeholder="Paste the eCourts case status text here…"></textarea>
+      <div class="row">
+        <label class="btn ghost file" for="ec-file">
+          <span data-i18n="ec.file">Choose a .txt file</span>
+          <input id="ec-file" type="file" accept=".txt,.md,text/plain" hidden />
+        </label>
+        <button class="btn primary grow" id="ec-save" data-i18n="ec.save">Remember these cases</button>
+      </div>
+      <p class="muted small" id="ec-hint"></p>
+    </div>
+    <div class="card">
+      <div class="row">
+        <input id="ec-q" class="grow" data-i18n-ph="ec.search" placeholder="CNR number, party name, or “next hearing”" />
+        <button class="btn" id="ec-go" data-i18n="search.go">Ask</button>
+      </div>
+      <div id="ec-list" class="list"></div>
+    </div>
+  </section>
+
+  <!-- ── backup & help ─────────────────────────────────────────── -->
+  <section class="pane" id="pane-more">
+    <div class="card">
+      <h2 data-i18n="backup.title">Backup</h2>
+      <p class="muted small" data-i18n="backup.note">Everything on this phone, in one file you can keep or move to another device.</p>
+      <div class="row">
+        <button class="btn" id="export" data-i18n="backup.export">Download backup</button>
+        <label class="btn ghost file" for="import">
+          <span data-i18n="backup.import">Restore from backup</span>
+          <input id="import" type="file" accept=".json,application/json" hidden />
+        </label>
+      </div>
+      <p class="muted small" id="storage-note"></p>
+      <button class="btn danger" id="wipe" data-i18n="backup.wipe">Delete everything on this phone</button>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="help.title">What this can do</h2>
+      <ul class="help">
+        <li data-i18n="help.one">Read English, Hindi and Urdu papers: type, date, parties with roles, amounts, court, case numbers and sections.</li>
+        <li data-i18n="help.two">Search in any of the three languages — by party, type, month or year.</li>
+        <li data-i18n="help.three">Keep eCourts case status text forever: <code>ecourts</code>, <code>next hearing</code>, or a CNR number.</li>
+        <li data-i18n="help.four">No server, no account, no upload. PDF and Word files need the hosted version — here paste the text or send a .txt.</li>
+      </ul>
+      <p class="muted small" data-i18n="help.ios">Tip: in Safari tap Share → Add to Home Screen to keep it as an app.</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span data-i18n="foot.line">Runs entirely on this device.</span>
+    <span id="version"></span>
+  </footer>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const __m = Object.create(null);
+
+/* src/util/script.js */
+__m['src/util/script.js'] = (function () {
+
+
+
+const LANG_LABEL = { en: 'English', hi: 'Hindi', ur: 'Urdu', mixed: 'Mixed' };
+
+const MISSING_TEXT = {
+  en: 'no readable text inside this file',
+  hi: 'इस फ़ाइल में पढ़ने योग्य पाठ नहीं मिला',
+  ur: 'اس فائل میں پڑھنے کے قابل متن نہیں ملا',
+};
+
+const MONTHS_LOCAL = {
+  hi: ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'],
+  ur: ['جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نومبر', 'دسمبر'],
+};
+
+const DEVANAGARI = /[\u0900-\u097F]/;
+const ARABIC = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+
+const DEV_RANGE = [0x0966, 0x096f];
+const AR_INDIC = [0x0660, 0x0669];
+const AR_EASTERN = [0x06f0, 0x06f9];
+
+
+function foldDigits(text) {
+  return String(text || '').replace(/[\u0966-\u096F\u0660-\u0669\u06F0-\u06F9]/g, (ch) => {
+    const code = ch.codePointAt(0);
+    if (code >= DEV_RANGE[0] && code <= DEV_RANGE[1]) return String(code - DEV_RANGE[0]);
+    if (code >= AR_INDIC[0] && code <= AR_INDIC[1]) return String(code - AR_INDIC[0]);
+    if (code >= AR_EASTERN[0] && code <= AR_EASTERN[1]) return String(code - AR_EASTERN[0]);
+    return ch;
+  });
+}
+
+
+function scriptCounts(text) {
+  const sample = String(text || '').slice(0, 8000);
+  const devanagari = (sample.match(/[\u0900-\u097F]/g) || []).length;
+  const arabic = (sample.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g) || []).length;
+  const latin = (sample.match(/[A-Za-z]/g) || []).length;
+  return { devanagari, arabic, latin };
+}
+
+
+function scriptLanguage(text) {
+  const { devanagari, arabic, latin } = scriptCounts(text);
+  const local = devanagari + arabic;
+  if (local < 15) return 'en';
+  if (latin > local * 1.6) return 'mixed';
+  if (arabic > devanagari * 1.5) return 'ur';
+  if (devanagari > arabic * 1.5) return 'hi';
+  return 'mixed';
+}
+
+const hasDevanagari = (text) => DEVANAGARI.test(String(text || ''));
+const hasArabic = (text) => ARABIC.test(String(text || ''));
+const isRtl = (lang) => lang === 'ur';
+
+
+function formatDateLocal(iso, lang, { long = true } = {}) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+  if (!match) return '';
+  const [, year, month, day] = match;
+  const names = MONTHS_LOCAL[lang];
+  if (!names) return '';
+  const monthName = names[Number(month) - 1];
+  if (!monthName) return '';
+  return long ? `${Number(day)} ${monthName} ${year}` : `${Number(day)}/${Number(month)}/${year}`;
+}
+
+
+function currencyLocal(amount, lang) {
+  if (lang === 'hi') return `रु. ${amount}`;
+  if (lang === 'ur') return `روپے ${amount}`;
+  return `Rs. ${amount}`;
+}
+
+
+function languageLine(lang) {
+  if (lang === 'hi') return 'Hindi';
+  if (lang === 'ur') return 'Urdu';
+  if (lang === 'mixed') return 'Hindi/Urdu + English';
+  return null;
+}
+
+
+
+const DEV_MAP = {
+  'अ': 'a', 'आ': 'aa', 'इ': 'i', 'ई': 'ee', 'उ': 'u', 'ऊ': 'oo', 'ऋ': 'ri', 'ए': 'e', 'ऐ': 'ai', 'ओ': 'o', 'औ': 'au',
+  'क': 'k', 'ख': 'kh', 'ग': 'g', 'घ': 'gh', 'ङ': 'n', 'च': 'ch', 'छ': 'chh', 'ज': 'j', 'झ': 'jh', 'ञ': 'n',
+  'ट': 't', 'ठ': 'th', 'ड': 'd', 'ढ': 'dh', 'ण': 'n', 'त': 't', 'थ': 'th', 'द': 'd', 'ध': 'dh', 'न': 'n',
+  'प': 'p', 'फ': 'ph', 'ब': 'b', 'भ': 'bh', 'म': 'm', 'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'v', 'श': 'sh',
+  'ष': 'sh', 'स': 's', 'ह': 'h', 'ळ': 'l', 'क़': 'q', 'ख़': 'kh', 'ग़': 'g', 'ज़': 'z', 'ड़': 'r', 'ढ़': 'rh',
+  'फ़': 'f', 'य़': 'y',
+  'ा': 'a', 'ि': 'i', 'ी': 'i', 'ु': 'u', 'ू': 'u', 'ृ': 'ri', 'े': 'e', 'ै': 'ai', 'ो': 'o', 'ौ': 'au', 'ं': 'n', 'ँ': 'n', 'ः': 'h', '्': '',
+  '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9',
+};
+
+const AR_MAP = {
+  'ا': 'a', 'آ': 'aa', 'ب': 'b', 'پ': 'p', 'ت': 't', 'ٹ': 't', 'ث': 's', 'ج': 'j', 'چ': 'ch', 'ح': 'h',
+  'خ': 'kh', 'د': 'd', 'ڈ': 'd', 'ذ': 'z', 'ر': 'r', 'ڑ': 'r', 'ز': 'z', 'ژ': 'zh', 'س': 's', 'ش': 'sh',
+  'ص': 's', 'ض': 'z', 'ط': 't', 'ظ': 'z', 'ع': '', 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ک': 'k', 'ك': 'k',
+  'گ': 'g', 'ل': 'l', 'م': 'm', 'ن': 'n', 'ں': 'n', 'و': 'o', 'ؤ': 'o', 'ہ': 'h', 'ھ': 'h', 'ة': 'h',
+  'ی': 'i', 'ي': 'i', 'ئ': 'i', 'ے': 'e', 'ۓ': 'e', 'ء': '', '٠': '0', '١': '1', '٢': '2', '٣': '3',
+  '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9', '۰': '0', '۱': '1', '۲': '2', '۳': '3',
+  '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+};
+
+const DEV_CONSONANTS = new Set([...'कखगघङचछजझञटठडढणतथदधनपफबभमयरलवशषसहळक़ख़ग़ज़ड़ढ़फ़य़']);
+const DEV_MATRAS = /[\u093E-\u094C\u0962\u0963]/;
+
+
+function transliterate(input) {
+  const text = String(input || '');
+  if (!/[\u0900-\u097F\u0600-\u06FF]/.test(text)) return text;
+
+  const out = []; // { ch, inherent }
+  const chars = [...text.normalize('NFC')];
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    if (DEV_MAP[ch] !== undefined) {
+      out.push({ ch: DEV_MAP[ch], inherent: false });
+      if (DEV_CONSONANTS.has(ch)) {
+        const next = chars[i + 1] || '';
+        if (!DEV_MATRAS.test(next) && next !== '्' && next !== '़' && next !== 'ं') {
+          out.push({ ch: 'a', inherent: true });
+        }
+      }
+      continue;
+    }
+    if (/[\u064B-\u065F\u0670\u200c\u200d]/.test(ch)) continue;
+    if (AR_MAP[ch] !== undefined) { out.push({ ch: AR_MAP[ch], inherent: false }); continue; }
+    out.push({ ch, inherent: false });
+  }
+
+  // A devanagari inherent "a" is silent at the end of a word ("राम" → "ram"),
+  // but a written matra is not ("शर्मा" → "sharma").
+  let result = '';
+  for (let i = 0; i < out.length; i++) {
+    const item = out[i];
+    const next = out[i + 1];
+    const atWordEnd = !next || /[\s.,;:!?)\]]/.test(next.ch);
+    if (item.inherent && atWordEnd) continue;
+    result += item.ch;
+  }
+  return result;
+}
+
+
+return { foldDigits, scriptCounts, scriptLanguage, formatDateLocal, currencyLocal, languageLine, transliterate, LANG_LABEL, MISSING_TEXT, MONTHS_LOCAL, hasDevanagari, hasArabic, isRtl };
+})();
+
+/* src/util/text.js */
+__m['src/util/text.js'] = (function () {
+const { foldDigits, transliterate } = __m['src/util/script.js'];
+
+
+
+
+function slugify(input, { max = 60, sep = '-' } = {}) {
+  const ascii = transliterate(String(input || ''))
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[₹]/g, 'Rs ')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-zA-Z0-9]+/g, sep)
+    .replace(new RegExp(`${sep}{2,}`, 'g'), sep)
+    .replace(new RegExp(`^${sep}|${sep}$`, 'g'), '');
+  return ascii.slice(0, max).replace(new RegExp(`${sep}$`), '') || 'file';
+}
+
+function titleCase(input) {
+  const small = new Set(['a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'v', 'vs', 'with']);
+  return String(input || '')
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w, i) => (i > 0 && small.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ')
+    .replace(/\bV\b/g, 'v')
+    .trim();
+}
+
+function collapse(input) {
+  return String(input || '').replace(/\s+/g, ' ').trim();
+}
+
+function clip(input, len = 160, suffix = '…') {
+  const s = collapse(input);
+  return s.length <= len ? s : s.slice(0, Math.max(0, len - suffix.length)).trimEnd() + suffix;
+}
+
+function truncateLines(input, maxLines, maxChars = 3800) {
+  const lines = String(input || '').split('\n');
+  let out = lines.slice(0, maxLines).join('\n');
+  if (out.length > maxChars) out = out.slice(0, maxChars);
+  if (lines.length > maxLines) out += '\n…';
+  return out;
+}
+
+
+const ABBREVIATIONS = /(?:\b(?:mr|mrs|ms|dr|shri|smt|sr|jr|no|nos|sec|secs|vs|adv|st|ltd|pvt|co|govt|hon|rs|etc|viz|i\.e|e\.g|w\.e\.f|s\.o|d\.o|w\.o|r\.o|a\.c|a\/c|b\/o|o\/o|sc|hc|ps)\.)$/i;
+
+function sentences(text) {
+  const clean = String(text || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ');
+  // A heading on its own line is its own sentence; so is a danda (।) or an
+  // Urdu full stop (۔), which end sentences just like a full stop.
+  const rough = clean
+    .split(/\n+/)
+    .filter((line) => line.trim())
+    .flatMap((line) => line.split(/(?<=[.!?।۔])\s+(?=[A-Z(0-9"'“]|[\u0900-\u097F]|[\u0600-\u06FF])/g));
+  const merged = [];
+  for (const part of rough) {
+    const last = merged[merged.length - 1];
+    if (last && ABBREVIATIONS.test(last.trim())) merged[merged.length - 1] = `${last} ${part}`;
+    else merged.push(part);
+  }
+  return merged
+    .map((sentence) => collapse(sentence))
+    .filter((sentence) => sentence.length > 1);
+}
+
+function paragraphs(text) {
+  return String(text || '')
+    .replace(/\r/g, '')
+    .split(/\n\s*\n/)
+    .map((p) => collapse(p))
+    .filter((p) => p.length > 1);
+}
+
+function words(text) {
+  return String(text || '').toLowerCase().match(/[a-z0-9\u0900-\u097F\u0600-\u06FF]+/g) || [];
+}
+
+
+function normalize(input) {
+  return foldDigits(String(input || ''))
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    // Arabic/Urdu: drop vowel marks and tatweel, unify letter shapes so a query
+    // typed on one keyboard still matches a document typed on another.
+    .replace(/[\u064B-\u065F\u0670\u0640\u200c\u200d]/g, '')
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ہ')
+    .replace(/[’‘]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[–—]/g, '-')
+    .toLowerCase();
+}
+
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let prev = new Array(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(
+        prev[j] + 1,
+        cur[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+function initials(name) {
+  return String(name || '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
+}
+
+function plural(n, one, many = `${one}s`) {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+function ordinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+
+function excerptAround(text, terms, radius = 260) {
+  const src = collapse(text);
+  if (!src) return '';
+  const lower = src.toLowerCase();
+  let best = -1;
+  for (const t of terms) {
+    if (!t) continue;
+    const idx = lower.indexOf(String(t).toLowerCase());
+    if (idx >= 0 && (best === -1 || idx < best)) best = idx;
+  }
+  if (best === -1) return src.slice(0, radius * 2);
+  const start = Math.max(0, best - radius);
+  const end = Math.min(src.length, best + radius);
+  return `${start > 0 ? '…' : ''}${src.slice(start, end).trim()}${end < src.length ? '…' : ''}`;
+}
+
+return { slugify, titleCase, collapse, clip, truncateLines, sentences, paragraphs, words, normalize, levenshtein, initials, plural, ordinal, escapeHtml, excerptAround };
+})();
+
+/* src/util/dates.js */
+__m['src/util/dates.js'] = (function () {
+const { foldDigits } = __m['src/util/script.js'];
+
+
+
+
+const LOCAL_MONTH_WORDS = {
+  'जनवरी': 0, 'जन': 0, 'फ़रवरी': 1, 'फरवरी': 1, 'मार्च': 2, 'अप्रैल': 3, 'मई': 4,
+  'जून': 5, 'जुलाई': 6, 'अगस्त': 7, 'सितंबर': 8, 'सितम्बर': 8, 'अक्टूबर': 9,
+  'अक्तूबर': 9, 'नवंबर': 10, 'नवम्बर': 10, 'दिसंबर': 11, 'दिसम्बर': 11,
+  'جنوری': 0, 'فروری': 1, 'مارچ': 2, 'اپریل': 3, 'مئی': 4, 'جون': 5, 'جولائی': 6,
+  'اگست': 7, 'ستمبر': 8, 'اکتوبر': 9, 'نومبر': 10, 'دسمبر': 11,
+};
+const EN_MONTH_NAMES = ['january', 'february', 'march', 'april', 'may', 'june', 'july',
+  'august', 'september', 'october', 'november', 'december'];
+
+
+function localizeDateText(input) {
+  let text = foldDigits(String(input || ''));
+  for (const [word, index] of Object.entries(LOCAL_MONTH_WORDS)) {
+    if (text.includes(word)) text = text.split(word).join(EN_MONTH_NAMES[index]);
+  }
+  return text
+    .replace(/\b(?:ईस्वी|ई\.|ईसवी)\b/g, '')
+    .replace(/\b(?:سنہ|سن)\b/g, '')
+    .replace(/[\u060C\u061B]/g, ',')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+
+function monthIndexOf(word) {
+  const w = String(word || '').trim().toLowerCase();
+  if (!w) return undefined;
+  if (LOCAL_MONTH_WORDS[String(word || '').trim()] !== undefined) return LOCAL_MONTH_WORDS[String(word || '').trim()];
+  return MONTH_ALIASES[w];
+}
+
+
+
+const MONTHS = [
+  'january', 'february', 'march', 'april', 'may', 'june',
+  'july', 'august', 'september', 'october', 'november', 'december',
+];
+
+const MONTH_ALIASES = {
+  jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3,
+  may: 4, jun: 5, june: 5, jul: 6, july: 6, aug: 7, august: 7, sep: 8, sept: 8,
+  september: 8, oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11,
+};
+
+function toIso(d) {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function fromIso(iso) {
+  if (!iso) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function today() {
+  return toIso(new Date());
+}
+
+function formatDate(iso, { long = false } = {}) {
+  const d = fromIso(iso);
+  if (!d) return '';
+  if (long) {
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function daysBetween(aIso, bIso = today()) {
+  const a = fromIso(aIso);
+  const b = fromIso(bIso);
+  if (!a || !b) return null;
+  return Math.round((a - b) / 86400000);
+}
+
+function addDays(iso, days) {
+  const d = fromIso(iso) || new Date();
+  d.setDate(d.getDate() + Number(days || 0));
+  return toIso(d);
+}
+
+function relativeDay(iso) {
+  const diff = daysBetween(iso, today());
+  if (diff === null) return '';
+  if (diff === 0) return 'today';
+  if (diff === 1) return 'yesterday';
+  if (diff === -1) return 'tomorrow';
+  if (diff > 1 && diff <= 14) return `${diff} days ago`;
+  if (diff < -1 && diff >= -14) return `in ${Math.abs(diff)} days`;
+  return '';
+}
+
+
+function parseDate(input, { now = new Date() } = {}) {
+  const s = localizeDateText(String(input || '').trim()).replace(/[.,]$/, '');
+  if (!s) return null;
+
+  // 2024-05-12
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s);
+  if (m) return build(+m[1], +m[2] - 1, +m[3]);
+
+  // 12/05/2024, 12-05-2024, 12.05.2024  (day first, Indian style)
+  m = /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/.exec(s);
+  if (m) {
+    let [, a, b, y] = m;
+    let day = +a;
+    let month = +b;
+    let year = +y;
+    if (year < 100) year += year > 40 ? 1900 : 2000;
+    // If the first number cannot be a day but the second can, it is US style.
+    if (day > 31 || (month > 12 && day <= 12)) [day, month] = [month, day];
+    return build(year, month - 1, day);
+  }
+
+  // 12th May 2024 / 12 May, 2024 / May 12, 2024 / 12th day of May 2024
+  const monthName = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)';
+  const re1 = new RegExp(`^(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:day\\s+of\\s+)?[\\s.-]*${monthName}[\\s,.-]*(\\d{4})?$`, 'i');
+  m = re1.exec(s);
+  if (m) {
+    const month = MONTH_ALIASES[m[2].toLowerCase()];
+    const year = m[3] ? +m[3] : now.getFullYear();
+    return build(year, month, +m[1]);
+  }
+  const re2 = new RegExp(`^${monthName}\\s*(\\d{1,2})(?:st|nd|rd|th)?[\\s,.-]*(\\d{4})?$`, 'i');
+  m = re2.exec(s);
+  if (m) {
+    const month = MONTH_ALIASES[m[1].toLowerCase()];
+    const year = m[3] ? +m[3] : now.getFullYear();
+    return build(year, month, +m[2]);
+  }
+
+  // "May 2024" or "2024" → first day
+  m = new RegExp(`^${monthName}[\\s,-]*(\\d{4})$`, 'i').exec(s);
+  if (m) return { iso: toIso(new Date(+m[2], MONTH_ALIASES[m[1].toLowerCase()], 1)), confident: false };
+  m = /^(\d{4})$/.exec(s);
+  if (m) return { iso: `${m[1]}-01-01`, confident: false };
+
+  return null;
+}
+
+function build(year, month, day) {
+  const d = new Date(year, month, day);
+  if (Number.isNaN(d.getTime())) return null;
+  if (d.getMonth() !== ((month % 12) + 12) % 12) return null;
+  return { iso: toIso(d), confident: true };
+}
+
+
+function findDates(text, { now = new Date() } = {}) {
+  const found = [];
+  const source = localizeDateText(String(text || ''));
+  const patterns = [
+    /\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:day\s+of\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)[\s,.-]+(\d{4})\b/gi,
+    /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?[\s,.-]+(\d{4})\b/gi,
+    /\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})\b/g,
+    /\b(\d{4})-(\d{2})-(\d{2})\b/g,
+  ];
+  const seen = new Set();
+  for (const re of patterns) {
+    let m;
+    while ((m = re.exec(source))) {
+      let parsed;
+      if (/^\d{4}-/.test(m[0]) && m.length === 4) parsed = parseDate(m[0]);
+      else if (m.length === 4 && /^\d{1,2}$/.test(m[1]) && MONTH_ALIASES[(m[2] || '').toLowerCase()] !== undefined) {
+        parsed = build(+m[3], MONTH_ALIASES[m[2].toLowerCase()], +m[1]);
+      } else if (m.length === 4 && MONTH_ALIASES[(m[1] || '').toLowerCase()] !== undefined) {
+        parsed = build(+m[3], MONTH_ALIASES[m[1].toLowerCase()], +m[2]);
+      } else if (m.length === 4) {
+        let day = +m[1]; let month = +m[2]; let year = +m[3];
+        if (year < 100) year += year > 40 ? 1900 : 2000;
+        if (day > 31 || (month > 12 && day <= 12)) [day, month] = [month, day];
+        parsed = build(year, month - 1, day);
+      }
+      if (!parsed || !parsed.iso) continue;
+      const yearNum = Number(parsed.iso.slice(0, 4));
+      if (yearNum < 1900 || yearNum > 2100) continue;
+      const key = `${parsed.iso}@${m.index}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      found.push({
+        iso: parsed.iso,
+        raw: m[0],
+        index: m.index,
+        context: source.slice(Math.max(0, m.index - 70), m.index + m[0].length + 70).replace(/\s+/g, ' ').trim(),
+      });
+    }
+  }
+  return found.sort((a, b) => a.index - b.index);
+}
+
+
+function relativeRange(phrase, { now = new Date() } = {}) {
+  // Local month names ("अप्रैल 2026", "اپریل 2026") are understood as English.
+  const p = localizeDateText(String(phrase || '')).toLowerCase().trim();
+  const y = now.getFullYear();
+  const mo = now.getMonth();
+  const iso = (d) => toIso(d);
+  const mk = (y2, m2, d2) => new Date(y2, m2, d2);
+  if (/^(today|aaj|आज|آج|آج\s*کے\s*دن)$/.test(p)) return { from: iso(now), to: iso(now), label: 'today' };
+  if (/^(yesterday|kal|कल|کل|پچھلے\s*دن)$/.test(p)) return { from: iso(mk(y, mo, now.getDate() - 1)), to: iso(mk(y, mo, now.getDate() - 1)), label: 'yesterday' };
+  if (/^(this week|is hafte|इस\s*हफ़्ते|इस\s*हफ्ते|اس\s*ہفتے)$/.test(p)) {
+    const day = now.getDay();
+    const start = mk(y, mo, now.getDate() - day);
+    return { from: iso(start), to: iso(now), label: 'this week' };
+  }
+  if (/^(last week|previous week|पिछले\s*हफ़्ते|पिछले\s*हफ्ते|گزشتہ\s*ہفتے|پچھلے\s*ہفتے)$/.test(p)) {
+    const day = now.getDay();
+    const end = mk(y, mo, now.getDate() - day - 1);
+    const start = mk(y, mo, end.getDate() - 6);
+    return { from: iso(start), to: iso(end), label: 'last week' };
+  }
+  if (/^(this month|is mahine|इस\s*महीने|इस\s*माह|اس\s*ماہ|اس\s*مہینے)$/.test(p)) return { from: iso(mk(y, mo, 1)), to: iso(now), label: 'this month' };
+  if (/^(last month|previous month|pichle mahine|पिछले\s*महीने|पिछले\s*माह|گزشتہ\s*ماہ|پچھلے\s*مہینے)$/.test(p)) {
+    const start = mk(y, mo - 1, 1);
+    const end = mk(y, mo, 0);
+    return { from: iso(start), to: iso(end), label: 'last month' };
+  }
+  if (/^(this year|is saal|इस\s*साल|اس\s*سال)$/.test(p)) return { from: `${y}-01-01`, to: iso(now), label: 'this year' };
+  if (/^(last year|previous year|pichle saal|पिछले\s*साल|گزشتہ\s*سال|پچھلے\s*سال)$/.test(p)) return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31`, label: 'last year' };
+  const monthPhrase = p.replace(/\s+/g, ' ').trim();
+  const mm = /^(?:in\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:\s+(\d{4}))?$/.exec(p);
+  if (mm) {
+    const m2 = monthIndexOf(mm[1]);
+    const y2 = mm[2] ? +mm[2] : y;
+    const start = mk(y2, m2, 1);
+    const end = mk(y2, m2 + 1, 0);
+    return { from: iso(start), to: iso(end), label: `${MONTHS[m2]} ${y2}` };
+  }
+  const y4 = /^(?:in\s+)?(\d{4})$/.exec(p);
+  if (y4) return { from: `${y4[1]}-01-01`, to: `${y4[1]}-12-31`, label: y4[1] };
+  if (/^(last|previous)\s+(\d+)\s+(day|days|week|weeks|month|months)$/.test(p)) {
+    const [, , n, unit] = /^(last|previous)\s+(\d+)\s+(day|days|week|weeks|month|months)$/.exec(p);
+    const count = Number(n);
+    const d = new Date(now);
+    if (unit.startsWith('day')) d.setDate(d.getDate() - count);
+    if (unit.startsWith('week')) d.setDate(d.getDate() - count * 7);
+    if (unit.startsWith('month')) d.setMonth(d.getMonth() - count);
+    return { from: iso(d), to: iso(now), label: `last ${count} ${unit}` };
+  }
+  return null;
+}
+
+return { localizeDateText, monthIndexOf, toIso, fromIso, today, formatDate, daysBetween, addDays, relativeDay, parseDate, findDates, relativeRange, LOCAL_MONTH_WORDS, MONTHS };
+})();
+
+/* src/util/numberWords.js */
+__m['src/util/numberWords.js'] = (function () {
+
+const ONES = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+  'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+function twoDigits(n) {
+  if (n < 20) return ONES[n];
+  const t = Math.floor(n / 10);
+  const o = n % 10;
+  return `${TENS[t]}${o ? `-${ONES[o]}` : ''}`;
+}
+
+function threeDigits(n) {
+  const h = Math.floor(n / 100);
+  const rest = n % 100;
+  const parts = [];
+  if (h) parts.push(`${ONES[h]} hundred`);
+  if (rest) parts.push(twoDigits(rest));
+  return parts.join(' ');
+}
+
+
+function numberToWordsIndian(value) {
+  const num = Math.floor(Math.abs(Number(value) || 0));
+  if (num === 0) return 'zero';
+  const crore = Math.floor(num / 10000000);
+  const lakh = Math.floor((num % 10000000) / 100000);
+  const thousand = Math.floor((num % 100000) / 1000);
+  const rest = num % 1000;
+  const parts = [];
+  if (crore) parts.push(`${numberToWordsIndian(crore)} crore`);
+  if (lakh) parts.push(`${twoDigits(lakh)} lakh`);
+  if (thousand) parts.push(`${twoDigits(thousand)} thousand`);
+  if (rest) parts.push(threeDigits(rest));
+  return parts.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+
+function rupeesInWords(value) {
+  const n = Math.floor(Math.abs(Number(value) || 0));
+  if (!n) return '';
+  return `Rupees ${numberToWordsIndian(n)} only`.replace(/\s+/g, ' ');
+}
+
+function formatIndianCurrency(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '';
+  const [whole, decimal] = Math.abs(num).toFixed(2).split('.');
+  const last3 = whole.slice(-3);
+  const rest = whole.slice(0, -3);
+  const grouped = rest ? `${rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',')},${last3}` : last3;
+  const sign = num < 0 ? '-' : '';
+  return `${sign}Rs. ${grouped}${decimal === '00' ? '' : `.${decimal}`}`;
+}
+
+return { numberToWordsIndian, rupeesInWords, formatIndianCurrency };
+})();
+
+/* src/analysis/taxonomy.js */
+__m['src/analysis/taxonomy.js'] = (function () {
+
+
+
+const DOC_TYPES = [
+  {
+    id: 'rent_agreement',
+    label: 'Rent / Lease Agreement',
+    labelHi: 'किराया अनुबंध',
+    labelUr: 'کرایہ نامہ',
+    folder: '01-Rent-and-Lease',
+    area: 'Property',
+    strong: [/rent\s+agreement/i, /lease\s+deed/i, /leave\s+and\s+licen[cs]e/i, /tenancy\s+agreement/i, /rental\s+agreement/i, /किराया\s*(?:अनुबंध|नामा|पत्र)/i, /کرایہ\s*نامہ/i, /किराये\s*का\s*अनुबंध/i],
+    weak: [/\blessor\b/i, /\blessee\b/i, /\blandlord\b/i, /\btenant\b/i, /monthly\s+rent/i, /security\s+deposit/i, /lock[- ]?in\s+period/i, /vacate\s+the\s+premises/i, /मकान\s*मालिक/i, /किरायेदार/i, /मासिक\s*किराया/i, /مالک\s*مکان/i, /کرایہ\s*دار/i, /ماہانہ\s*کرایہ/i],
+  },
+  {
+    id: 'sale_deed',
+    label: 'Sale Deed',
+    labelHi: 'विक्रय पत्र',
+    labelUr: 'بیع نامہ',
+    folder: '02-Sale-Deed',
+    area: 'Property',
+    strong: [/sale\s+deed/i, /conveyance\s+deed/i, /absolute\s+sale/i, /deed\s+of\s+sale/i, /विक्रय\s*पत्र/i, /بیع\s*نامہ/i, /विक्रय\s*नामा/i],
+    weak: [/\bvendor\b/i, /\bvendee\b/i, /sale\s+consideration/i, /transfer\s+of\s+ownership/i, /registry\s+office/i, /stamp\s+duty/i, /विक्रेता/i, /क्रेता/i, /بائع/i, /خریدار/i],
+  },
+  {
+    id: 'agreement_to_sell',
+    label: 'Agreement to Sell',
+    labelHi: 'बैनामा',
+    labelUr: 'بیعانہ',
+    folder: '02-Sale-Deed',
+    area: 'Property',
+    strong: [/agreement\s+to\s+sell/i, /bainama/i, /memorandum\s+of\s+agreement\s+for\s+sale/i, /बैनामा|बयाना/i, /بیعانہ/i],
+    weak: [/earnest\s+money/i, /sale\s+deed\s+shall\s+be\s+executed/i, /balance\s+consideration/i, /एडवांस\s*राशि/i],
+  },
+  {
+    id: 'gift_deed',
+    label: 'Gift Deed',
+    labelHi: 'दान पत्र',
+    labelUr: 'ہبہ نامہ',
+    folder: '03-Property-Other',
+    area: 'Property',
+    strong: [/gift\s+deed/i, /deed\s+of\s+gift/i, /दान\s*पत्र/i, /ہبہ\s*نامہ/i],
+    weak: [/\bdonor\b/i, /\bdonee\b/i, /natural\s+love\s+and\s+affection/i, /voluntarily\s+and\s+without\s+consideration/i, /दानदाता/i],
+  },
+  {
+    id: 'mortgage_deed',
+    label: 'Mortgage / Loan Document',
+    labelHi: 'बंधक पत्र',
+    labelUr: 'رہن نامہ',
+    folder: '03-Property-Other',
+    area: 'Property',
+    strong: [/mortgage\s+deed/i, /deed\s+of\s+mortgage/i, /home\s+loan\s+agreement/i, /loan\s+agreement/i, /बंधक\s*पत्र/i, /رہن\s*نامہ/i],
+    weak: [/\bmortgagor\b/i, /\bmortgagee\b/i, /\bborrower\b/i, /\blender\b/i, /hypothecat/i, /rate\s+of\s+interest/i, /बंधक/i],
+  },
+  {
+    id: 'partition_deed',
+    label: 'Partition / Family Settlement',
+    labelHi: 'बंटवारा नामा',
+    labelUr: 'تقسیم نامہ',
+    folder: '03-Property-Other',
+    area: 'Property',
+    strong: [/partition\s+deed/i, /family\s+settlement/i, /memorandum\s+of\s+partition/i, /relinquish/i, /बंटवारा\s*नामा|विभाजन\s*नामा/i, /تقسیم\s*نامہ/i],
+    weak: [/\bco-?parcener/i, /ancestral\s+property/i, /equal\s+shares/i, /hindu\s+undivided\s+family/i],
+  },
+  {
+    id: 'power_of_attorney',
+    label: 'Power of Attorney',
+    labelHi: 'मुख्तार नामा',
+    labelUr: 'مختار نامہ',
+    folder: '04-Power-of-Attorney',
+    area: 'Documentation',
+    strong: [/power\s+of\s+attorney/i, /\bGPA\b/, /\bSPA\b/, /special\s+power/i, /general\s+power/i, /मुख्तार\s*नामा|अधिकार\s*पत्र/i, /مختار\s*نامہ/i],
+    weak: [/attorney\s+holder/i, /principal\s+hereby\s+appoint/i, /authoris?ed\s+to\s+act/i, /donee/i, /वकील\s*नामा/i],
+  },
+  {
+    id: 'will',
+    label: 'Will / Testament',
+    labelHi: 'वसीयत',
+    labelUr: 'وصیت نامہ',
+    folder: '05-Wills',
+    area: 'Succession',
+    strong: [/last\s+will/i, /testament/i, /will\s+and\s+testament/i, /वसीयत(?:नामा)?/i, /وصیت\s*نامہ/i],
+    weak: [/\btestator\b/i, /\bexecutor\b/i, /bequeath/i, /probate/i, /legatee/i, /वसीयतकर्ता/i],
+  },
+  {
+    id: 'legal_notice',
+    label: 'Legal Notice',
+    labelHi: 'विधिक सूचना',
+    labelUr: 'قانونی نوٹس',
+    folder: '06-Notices',
+    area: 'Litigation',
+    strong: [/legal\s+notice/i, /demand\s+notice/i, /notice\s+under\s+section/i, /advocate'?s?\s+notice/i, /hereby\s+call\s+upon/i, /through\s+this\s+notice/i, /विधिक\s*सूचना/i, /कानूनी\s*नोटिस/i, /नोटिस\s*(?:दिया|भेजा|प्रेषित)/i, /قانونی\s*نوٹس/i, /یہ\s*نوٹس/i],
+    weak: [/noticee/i, /failing\s+which/i, /within\s+fifteen|within\s+15\s+days/i, /restitute|restitution/i, /damages/i, /धारा\s*138/i, /دفعہ\s*138/i, /नोटिस/i, /نوٹس/i],
+  },
+  {
+    id: 'cheque_bounce_notice',
+    label: 'Cheque Bounce Notice (S.138 NI Act)',
+    labelHi: 'चेक बाउंस नोटिस',
+    labelUr: 'چیک باؤنس نوٹس',
+    folder: '06-Notices',
+    area: 'Litigation',
+    strong: [/section\s*138/i, /\b138\s+of\s+the\s+negotiable\s+instruments/i, /cheque\s+(?:was\s+)?dishonou?red/i, /insufficient\s+funds/i, /चेक\s*(?:बाउंस|अनादरित)/i, /चیک\s*باؤنس/i],
+    weak: [/memorandum\s+of\s+return/i, /drawer\s+of\s+the\s+cheque/i, /drawee\s+bank/i, /statutory\s+period/i, /धारा\s*138/i],
+  },
+  {
+    id: 'plaint',
+    label: 'Plaint',
+    labelHi: 'वाद पत्र',
+    labelUr: 'دعویٰ نامہ',
+    folder: '07-Pleadings',
+    area: 'Litigation',
+    strong: [/\bplaint\b/i, /suit\s+for/i, /plaintiff\s+(?:submits|respectfully)/i, /humbly\s+prays/i, /वाद\s*पत्र/i, /दावा\s*पत्र/i],
+    weak: [/\bplaintiff\b/i, /\bdefendant\b/i, /cause\s+of\s+action/i, /valuation\s+of\s+suit/i, /prayer\s+clause/i, /वादी/i, /प्रतिवादी/i],
+  },
+  {
+    id: 'written_statement',
+    label: 'Written Statement',
+    labelHi: 'लिखित कथन',
+    labelUr: 'جواب دعویٰ',
+    folder: '07-Pleadings',
+    area: 'Litigation',
+    strong: [/written\s+statement/i, /preliminary\s+objections/i, /लिखित\s*कथन/i, /जवाब\s*दावा/i, /جواب\s*دعویٰ/i],
+    weak: [/\bdefendant\b/i, /parawise\s+reply/i, /denies\s+each\s+and\s+every/i],
+  },
+  {
+    id: 'petition',
+    label: 'Petition',
+    labelHi: 'याचिका',
+    labelUr: 'درخواست',
+    folder: '07-Pleadings',
+    area: 'Litigation',
+    strong: [/(?:writ|divorce|bail|anticipatory\s+bail|maintenance)\s+petition/i, /bail\s+application/i, /petition\s+under\s+section/i, /petitioner\s+respectfully/i, /याचिका/i, /प्रार्थना\s*पत्र/i, /درخواست\s*گزار/i],
+    weak: [/\bpetitioner\b/i, /\brespondent\b/i, /prayer/i, /interim\s+relief/i, /आवेदक/i],
+  },
+  {
+    id: 'complaint',
+    label: 'Criminal / Consumer Complaint',
+    labelHi: 'शिकायत',
+    labelUr: 'شکایت',
+    folder: '07-Pleadings',
+    area: 'Litigation',
+    strong: [/(?:criminal|police|consumer|private)\s+complaint/i, /complaint\s+under\s+section/i, /शिकायत/i, /شکایت/i],
+    weak: [/\bcomplainant\b/i, /\baccused\b/i, /cognizable\s+offence/i, /deficiency\s+in\s+service/i],
+  },
+  {
+    id: 'fir',
+    label: 'FIR / Police Papers',
+    labelHi: 'प्राथमिकी',
+    labelUr: 'ایف آئی آر',
+    folder: '07-Pleadings',
+    area: 'Criminal',
+    strong: [/\bFIR\b/, /first\s+information\s+report/i, /station\s+house\s+officer/i, /charge[-\s]?sheet/i, /police\s+complaint/i, /प्राथमिकी/i, /एफ\.?\s?आई\.?\s?आर\.?/i, /ایف\s*آئی\s*آر/i],
+    weak: [/cognizable/i, /\bsection\s*\d+\s*IPC\b/i, /investigat/i, /थाना/i, /पुलिस/i, /تھانہ/i],
+  },
+  {
+    id: 'court_order',
+    label: 'Court Order / Judgment',
+    labelHi: 'न्यायालयीन आदेश',
+    labelUr: 'عدالتی حکم',
+    folder: '08-Orders-and-Judgments',
+    area: 'Litigation',
+    strong: [/\bjudgment\b/i, /\border\b.*(?:passed|pronounced)/i, /in\s+the\s+court\s+of/i, /\bdecree\b/i, /honourable\s+court/i, /न्यायालय[^\n]{0,20}आदेश/i, /आदेश\s*पत्र/i, /عدالت[^\n]{0,20}حکم/i, /حکم\s*نامہ/i],
+    weak: [/\bld\.?\s+?counsel\b/i, /it\s+is\s+(?:hereby\s+)?(?:ordered|directed)/i, /with\s+costs/i, /bail\s+application/i, /learned\s+public\s+prosecutor/i, /\bprosecution\b/i, /\bversus\b/i, /न्यायाधीश/i, /न्यायालय/i, /عدالت/i, /مجسٹریٹ/i],
+  },
+  {
+    id: 'affidavit',
+    label: 'Affidavit',
+    labelHi: 'शपथ पत्र',
+    labelUr: 'حلف نامہ',
+    folder: '09-Affidavits-and-Declarations',
+    area: 'Documentation',
+    strong: [/\baffidavit\b/i, /solemnly\s+affirm/i, /deponent/i, /शपथ\s*पत्र/i, /हलफ़?\s*नामा/i, /حلف\s*نامہ/i, /بیان\s*حلفی/i],
+    weak: [/before\s+me/i, /district\s+registrar/i, /notary/i, /declarant/i, /शपथ\s*कर्ता/i, /सत्यापन/i, /حلف\s*اپتھا/i],
+  },
+  {
+    id: 'vakalatnama',
+    label: 'Vakalatnama',
+    labelHi: 'वकालतनामा',
+    labelUr: 'وکالت نامہ',
+    folder: '10-Vakalatnama',
+    area: 'Litigation',
+    strong: [/vakalatnama/i, /memorandum\s+of\s+appearance/i, /appoint.*advocate/i, /वकालतनामा/i, /وکالت\s*نامہ/i, /وکیل\s*نامہ/i],
+    weak: [/counsel/i, /authoris?e\s+to\s+appear/i, /client/i, /अधिवक्ता/i, /وکیل/i],
+  },
+  {
+    id: 'noc',
+    label: 'NOC / Consent Letter',
+    labelHi: 'अनापत्ति पत्र',
+    labelUr: 'عدم اعتراض نامہ',
+    folder: '11-NOC-and-Consent',
+    area: 'Documentation',
+    strong: [/\bNOC\b/, /no[-\s]?objection\s+certificate/i, /consent\s+letter/i, /no\s+objection/i, /अनापत्ति\s*पत्र/i, /عدم\s*اعتراض/i, /عدم\s*اعتراض\s*نامہ/i],
+    weak: [/society/i, /there\s+is\s+no\s+objection/i],
+  },
+  {
+    id: 'agreement',
+    label: 'Agreement',
+    labelHi: 'समझौता पत्र',
+    labelUr: 'معاہدہ نامہ',
+    folder: '12-Agreements',
+    area: 'Contracts',
+    strong: [/agreement\s+made/i, /this\s+agreement\s+is\s+(?:made|entered)/i, /memorandum\s+of\s+understanding/i, /terms\s+and\s+conditions/i, /समझौता\s*पत्र/i, /समझौता/i, /معاہدہ/i],
+    weak: [/\bparties\s+hereto\b/i, /\bwhereas\b/i, /in\s+witness\s+whereof/i, /herein\s+after/i, /पक्षकार/i, /فریقین/i],
+  },
+  {
+    id: 'nda',
+    label: 'Non-Disclosure Agreement',
+    labelHi: 'गोपनीयता समझौता',
+    labelUr: 'رازداری معاہدہ',
+    folder: '12-Agreements',
+    area: 'Contracts',
+    strong: [/non[-\s]?disclosure\s+agreement/i, /\bNDA\b/i, /confidentiality\s+agreement/i, /गोपनीयता\s*(?:समझौता|पत्र)/i, /عدم\s*افشاء/i],
+    weak: [/confidential\s+information/i, /breach\s+of\s+confidence/i],
+  },
+  {
+    id: 'partnership_deed',
+    label: 'Partnership / Business Deed',
+    labelHi: 'साझेदारी विलेख',
+    labelUr: 'شراکت نامہ',
+    folder: '13-Business-and-Company',
+    area: 'Corporate',
+    strong: [/partnership\s+deed/i, /deed\s+of\s+partnership/i, /LLP\s+agreement/i, /साझेदारी\s*(?:विलेख|समझौता)/i, /شراکت\s*نامہ/i],
+    weak: [/\bpartners?\b/i, /profit\s+sharing\s+ratio/i, /share\s+capital/i, /firm\s+name/i],
+  },
+  {
+    id: 'company_document',
+    label: 'Company Documents',
+    folder: '13-Business-and-Company',
+    area: 'Corporate',
+    strong: [/memorandum\s+of\s+association/i, /articles\s+of\s+association/i, /board\s+resolution/i, /certificate\s+of\s+incorporation/i, /share\s+certificate/i, /annual\s+return/i],
+    weak: [/registered\s+office/i, /authoris?ed\s+capital/i, /\bDIN\b/, /\bCIN\b/],
+  },
+  {
+    id: 'employment_contract',
+    label: 'Employment / Service Contract',
+    labelHi: 'नियुक्ति पत्र',
+    labelUr: 'ملازمت نامہ',
+    folder: '14-Employment',
+    area: 'Employment',
+    strong: [/employment\s+(?:agreement|contract)/i, /appointment\s+letter/i, /offer\s+letter/i, /service\s+agreement/i, /consultancy\s+agreement/i, /नियुक्ति\s*पत्र/i, /नियुक्ति\s*(?:पत्र|आदेश)/i, /ملازمت\s*نامہ/i],
+    weak: [/\bemployee\b/i, /\bemployer\b/i, /notice\s+period/i, /salary/i, /designation/i, /probation/i, /वेतन/i, /تنخواہ/i],
+  },
+  {
+    id: 'settlement',
+    label: 'Settlement / Compromise',
+    labelHi: 'समझौता नामा',
+    labelUr: 'صلح نامہ',
+    folder: '15-Settlement',
+    area: 'Litigation',
+    strong: [/settlement\s+agreement/i, /compromise\s+deed/i, /settlement\s+deed/i, /full\s+and\s+final\s+settlement/i, /समझौता\s*नामा/i, /صلح\s*نامہ/i],
+    weak: [/out\s+of\s+court/i, /both\s+parties\s+have\s+agreed/i, /no\s+further\s+claim/i],
+  },
+  {
+    id: 'arbitration',
+    label: 'Arbitration Document',
+    folder: '16-Arbitration',
+    area: 'Arbitration',
+    strong: [/arbitration\s+(?:award|agreement|clause|petition)/i, /arbitrator/i, /arbitral\s+tribunal/i, /माध्यस्थम्/i, /ثالثی/i],
+    weak: [/award/i, /sole\s+arbitrator/i, /arbitration\s+and\s+conciliation/i],
+  },
+  {
+    id: 'bank_statement',
+    label: 'Bank Statement / Financial Record',
+    labelHi: 'बैंक विवरण',
+    labelUr: 'بینک اسٹیٹمنٹ',
+    folder: '17-Financial',
+    area: 'Finance',
+    strong: [/bank\s+statement/i, /statement\s+of\s+account/i, /account\s+statement/i, /passbook/i, /transaction\s+details/i, /बैंक\s*विवरण/i, /पासबुक/i, /بینک\s*اسٹیٹمنٹ/i],
+    weak: [/opening\s+balance/i, /closing\s+balance/i, /withdrawal/i, /deposit/i, /IFSC/i, /खाता\s*संख्या/i, /اکاؤنٹ\s*نمبر/i],
+  },
+  {
+    id: 'invoice',
+    label: 'Invoice / Bill',
+    labelHi: 'बीजक',
+    labelUr: 'انوائس',
+    folder: '17-Financial',
+    area: 'Finance',
+    strong: [/\binvoice\b/i, /tax\s+invoice/i, /proforma/i, /billing\s+statement/i, /बीजक/i, /चालान/i, /इनवॉइस/i, /انوائس/i, /بل\s*نمبر/i],
+    weak: [/GSTIN/i, /total\s+amount/i, /HSN/i, /bill\s+to/i, /payment\s+due/i, /जीएसटी/i, /جی\s*ایس\s*ٹی/i, /कुल\s*राशि/i],
+  },
+  {
+    id: 'receipt',
+    label: 'Receipt',
+    labelHi: 'रसीद',
+    labelUr: 'رسید',
+    folder: '17-Financial',
+    area: 'Finance',
+    strong: [/receipt/i, /acknowledg(?:e)?ment\s+of\s+payment/i, /रसीद/i, /رسید/i],
+    weak: [/received\s+(?:with\s+thanks|from|the\s+sum)/i, /in\s+full\s+and\s+final/i, /\bcash\b/i, /प्राप्त\s*राशि/i],
+  },
+  {
+    id: 'it_return',
+    label: 'Income Tax / GST Filing',
+    folder: '18-Tax',
+    area: 'Tax',
+    strong: [/income\s+tax\s+return/i, /\bITR\b/i, /GST\s+return/i, /GSTR[-\s]?\d/i, /form\s*16/i, /tax\s+computation/i, /आयकर\s*विवरणी/i, /आय\s*कर\s*रिटर्न/i],
+    weak: [/assessment\s+year/i, /PAN/i, /acknowledgement\s+number/i],
+  },
+  {
+    id: 'land_record',
+    label: 'Land Record (Khasra / Jamabandi / 7-12)',
+    folder: '19-Land-Records',
+    area: 'Property',
+    strong: [/jamabandi/i, /khasra/i, /khatauni/i, /7\/12\s+extract/i, /record\s+of\s+rights/i, /mutation\s+order/i, /shajra/i, /खतौनी|खसरा|जमाबंदी/i, /فرد\s*مالکیت/i],
+    weak: [/tehsildar/i, /patwari/i, /land\s+revenue/i, /\bgirdawar\b/i],
+  },
+  {
+    id: 'encumbrance',
+    label: 'Encumbrance / Search Report',
+    folder: '19-Land-Records',
+    area: 'Property',
+    strong: [/encumbrance\s+certificate/i, /title\s+search\s+report/i, /search\s+report/i, /property\s+card/i, /भार\s*प्रमाण\s*पत्र/i],
+    weak: [/sub-?registrar/i, /registered\s+in\s+book/i],
+  },
+  {
+    id: 'identity_proof',
+    label: 'Identity / Address Proof',
+    folder: '20-Identity',
+    area: 'Documentation',
+    strong: [/\baadhaar\b/i, /aadhar/i, /permanent\s+account\s+number/i, /\bPAN\s+card\b/i, /passport/i, /driving\s+licence/i, /voter\s+id/i, /election\s+card/i, /आधार\s*कार्ड/i, /पैन\s*कार्ड/i, /شناختی\s*کارڈ/i],
+    weak: [/date\s+of\s+birth/i, /government\s+of\s+india/i, /unique\s+identification/i],
+  },
+  {
+    id: 'certificate',
+    label: 'Certificate (Birth / Death / Marriage)',
+    folder: '21-Certificates',
+    area: 'Documentation',
+    strong: [/birth\s+certificate/i, /death\s+certificate/i, /marriage\s+certificate/i, /caste\s+certificate/i, /income\s+certificate/i, /domicile/i, /प्रमाण\s*पत्र/i, /सर्टिफिकेट/i, /اسناد/i],
+    weak: [/municipal\s+(?:corporation|council)/i, /registrar\s+of\s+(?:births|marriages)/i, /issued\s+on/i],
+  },
+  {
+    id: 'education',
+    label: 'Educational Document',
+    folder: '22-Education',
+    area: 'Documentation',
+    strong: [/marksheet/i, /mark\s+sheet/i, /degree\s+certificate/i, /diploma/i, /transcript/i, /university/i, /अंकतालिका|मार्कशीट/i, /نتیجہ\s*کارڈ/i],
+    weak: [/semester/i, /examination/i, /roll\s+number/i, /board\s+of\s+secondary/i],
+  },
+  {
+    id: 'medical',
+    label: 'Medical Record',
+    folder: '23-Medical',
+    area: 'Medical',
+    strong: [/medical\s+report/i, /discharge\s+summary/i, /prescription/i, /diagnostic/i, /post[-\s]?mortem/i, /injury\s+report/i, /चिकित्सा\s*प्रमाण\s*पत्र/i, /میڈیکل\s*سرٹیفکیٹ/i],
+    weak: [/patient/i, /\bdoctor\b/i, /hospital/i, /diagnosis/i],
+  },
+  {
+    id: 'valuation',
+    label: 'Valuation Report',
+    folder: '24-Reports',
+    area: 'Property',
+    strong: [/valuation\s+report/i, /valuer/i, /market\s+value/i, /मूल्यांकन\s*(?:पत्र|रिपोर्ट)/i, /تخمینہ/i],
+    weak: [/fair\s+market/i, /estimated\s+value/i],
+  },
+  {
+    id: 'notice_reply',
+    label: 'Reply to Notice',
+    labelHi: 'नोटिस का जवाब',
+    labelUr: 'نوٹس کا جواب',
+    folder: '06-Notices',
+    area: 'Litigation',
+    strong: [/reply\s+to\s+(?:the\s+)?(?:legal\s+)?notice/i, /response\s+to\s+notice/i, /your\s+notice\s+dated/i, /नोटिस\s*का\s*जवाब/i, /نوٹس\s*کا\s*جواب/i],
+    weak: [/the\s+allegations\s+are\s+denied/i, /without\s+prejudice/i],
+  },
+  {
+    id: 'draft',
+    label: 'Draft',
+    labelHi: 'मसौदा',
+    labelUr: 'مسودہ',
+    folder: '25-Drafts',
+    area: 'Drafting',
+    strong: [/^\s*draft\b/i, /\[draft\]/i],
+    weak: [/\bTBD\b/, /_{4,}/, /\[insert/i],
+  },
+  {
+    id: 'photo',
+    label: 'Photo / Scan',
+    folder: '26-Images',
+    area: 'Evidence',
+    strong: [],
+    weak: [],
+  },
+];
+
+const TYPE_BY_ID = new Map(DOC_TYPES.map((t) => [t.id, t]));
+
+function typeLabel(id) {
+  return TYPE_BY_ID.get(id)?.label || 'Document';
+}
+
+function typeFolder(id) {
+  return TYPE_BY_ID.get(id)?.folder || '99-Other';
+}
+
+const PRACTICE_AREAS = [...new Set(DOC_TYPES.map((t) => t.area))];
+
+return { typeLabel, typeFolder, DOC_TYPES, TYPE_BY_ID, PRACTICE_AREAS };
+})();
+
+/* src/analysis/localized.js */
+__m['src/analysis/localized.js'] = (function () {
+const { collapse, titleCase, normalize } = __m['src/util/text.js'];
+const { foldDigits, transliterate, hasDevanagari, hasArabic } = __m['src/util/script.js'];
+
+
+
+
+
+
+const LOCAL_ROLES = [
+  [/(?:मकान\s*मालिक|भवन\s*स्वामी|मालिक)/, 'Lessor'],
+  [/(?:किरायेदार|किराया\s*दार)/, 'Lessee'],
+  [/(?:विक्रेता|विक्रयकर्ता)/, 'Vendor'],
+  [/(?:क्रेता|खरीदार)/, 'Vendee'],
+  [/(?:प्रतिवादी)/, 'Defendant'],
+  [/(?:वादी|वादकारी)/, 'Plaintiff'],
+  [/(?:याचिकाकर्ता)/, 'Petitioner'],
+  [/(?:आवेदक|प्रार्थी)/, 'Applicant'],
+  [/(?:अभियुक्त|आरोपी)/, 'Accused'],
+  [/(?:प्रथम\s*पक्ष|पहला\s*पक्ष)/, 'First Party'],
+  [/(?:द्वितीय\s*पक्ष|दूसरा\s*पक्ष)/, 'Second Party'],
+  [/(?:गवाह|साक्षी)/, 'Witness'],
+  [/(?:शपथकर्ता|शपथ\s*कर्ता)/, 'Deponent'],
+  [/(?:مالک\s*مکان|مالک)/, 'Lessor'],
+  [/(?:کرایہ\s*دار|کرایہ\s*گیر)/, 'Lessee'],
+  [/(?:بائع|فروخت\s*کرنے\s*والا)/, 'Vendor'],
+  [/(?:خریدار)/, 'Vendee'],
+  [/(?:مدعا\s*علیہ)/, 'Defendant'],
+  [/(?:مدعی)/, 'Plaintiff'],
+  [/(?:درخواست\s*گزار)/, 'Applicant'],
+  [/(?:ملزم)/, 'Accused'],
+  [/(?:فریق\s*اول)/, 'First Party'],
+  [/(?:فریق\s*دوم|دوسرا\s*فریق)/, 'Second Party'],
+  [/(?:گواہ)/, 'Witness'],
+];
+
+function localRole(segment) {
+  const text = String(segment || '');
+  for (const [re, label] of LOCAL_ROLES) if (re.test(text)) return label;
+  return null;
+}
+
+
+
+const PLACE_OR_RELATION = /(?:\s*(?:पुत्र|पुत्री|पत्नी|पति|निवासी|साकिन|निवासिनी|उम्र|आयु|पिता|माता|पत्नी\s*के|पुत्र\s*के)[\s\S]*$)|(?:\s*(?:ولد|زوجہ|ساکن|ساکنہ|عمر|پتہ|مکاں)[\s\S]*$)/i;
+
+const NAME_STOP_LOCAL = new Set([
+  'प्रति', 'महोदय', 'महोदया', 'न्यायालय', 'अधिवक्ता', 'दिनांक', 'विषय', 'विषय-',
+  'धारा', 'अधिनियम', 'जिला', 'न्यायाधीश', 'पक्ष', 'आदि', 'यह', 'वह', 'मैं', 'हम',
+  'بنام', 'عدالت', 'تاریخ', 'دفعہ', 'قانون', 'ضلع', 'جج', 'فریق', 'میں', 'ہم',
+]);
+
+// "تاریخ: 16 اکتوبر 2026" is a date line, not a party.
+const DATE_OR_MONTH = new Set([
+  'जनवरी', 'फरवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'सितम्बर',
+  'अक्टूबर', 'अक्तूबर', 'नवंबर', 'नवम्बर', 'दिसंबर', 'दिसम्बर',
+  'جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نومبر', 'دسمبر',
+  'तारीख', 'दिनांक', 'तिथि', 'تاریخ', 'ईस्वी', 'ईसवी', 'سن',
+]);
+
+// Titles of documents, never people.
+const HEADING_LINE = /^(?:किराया|विक्रय|शपथ|वकालतनामा|नोटिस|सूचना|वाद|अनुबंध|समझौता|प्रार्थना|आवेदन|अधिकार\s*पत्र|اقرار|معاہدہ|نوٹس|قانونی|درخواست|مقدمہ|بیع|حلف|کرایہ|ہبہ|رہن|تقسیم|وصیت|مختار|بیعانہ|شراکت|ملازمت)/i;
+
+function isLocalName(raw) {
+  const name = collapse(String(raw || ''))
+    .replace(/^[,;:\-\u2013\u2014()"'।\s]+/, '')
+    .replace(/[,;:\-\u2013\u2014()"'।۔\s]+$/, '')
+    .trim();
+  if (!name || name.length < 3 || name.length > 70) return false;
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length > 7) return false;
+  if (NAME_STOP_LOCAL.has(words[0])) return false;
+  if (/\d{3,}/.test(name)) return false;
+  if (/[:：]/.test(name)) return false;
+  if (words.every((w) => DATE_OR_MONTH.has(w.replace(/[।۔,]/g, '')))) return false;
+  if (words.length <= 3 && HEADING_LINE.test(name)) return false;
+  if (/[।۔]/.test(name)) return false;
+  if (/(?:है|हैं|किया|करना|ہے|ہیں|کیا|کرنا)$/.test(name)) return false;
+  return true;
+}
+
+
+const ROLE_TAIL = /\s*(?:\.{2,}|…)?\s*(?:वादी|प्रतिवादी|अभियुक्त|आरोपी|याचिकाकर्ता|आवेदक|गवाह|साक्षी|पक्ष|مدعی|مدعا\s*علیہ|ملزم|گواہ|فریق)\s*$/i;
+
+// "को श्री राजेश शर्मा", "اور جناب …" — drafting particles that belong to the
+// sentence, not to the name.
+const LEADING_PARTICLE = /^(?:को|तथा|और|एवं|के|की|का|से|منجانب|کی|اور|کے|سے|کو)\s+/i;
+
+function cleanLocalName(raw) {
+  let name = collapse(String(raw || ''))
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(ROLE_TAIL, '')
+    .replace(/\s*(?:\.{2,}|…)\s*$/, '')
+    .replace(PLACE_OR_RELATION, '')
+    .replace(/^(?:श्री|श्रीमती|सुश्री|डॉ॰|डॉ\.|جناب|محترمہ|محترم|مسٹر)\s*/i, (m) => m)
+    .replace(/\s*[-–—,]+\s*$/, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  while (LEADING_PARTICLE.test(name)) name = name.replace(LEADING_PARTICLE, '');
+  // A trailing one-letter fragment means the capture cut a connective in half.
+  name = name.replace(/\s+[\u0900-\u097F\u0600-\u06FF]$/, '').trim();
+  return name;
+}
+
+
+
+
+
+function nameFromChunk(chunk) {
+  let s = collapse(String(chunk || ''))
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[,;:।۔]+\s*$/, ' ');
+  s = s.replace(PLACE_OR_RELATION, ' ');
+  const parts = s.split(/(?:[,;।۔]|\s(?:में|کو|نے|میں)\s)/).filter((part) => part.trim());
+  const tail = parts.pop() || '';
+  const words = tail.trim().split(/\s+/).filter((w) => w && !/\d/.test(w));
+  return words.slice(-4).join(' ');
+}
+
+
+function extractLocalParties(text) {
+  const source = String(text || '');
+  if (!hasDevanagari(source) && !hasArabic(source)) return [];
+  const head = source.slice(0, 12000);
+  const found = [];
+  const seen = new Set();
+
+  const push = (raw, role, where, priority, index) => {
+    const name = cleanLocalName(raw);
+    if (!isLocalName(name)) return;
+    const key = normalize(name).replace(/[^\p{L}\p{N}]/gu, '');
+    if (key.length < 3 || seen.has(key)) return;
+    seen.add(key);
+    found.push({ name, role: role || null, where, priority, index });
+  };
+
+  // 1. "… A तथा B के बीच …" / "A اور B کے درمیان"
+  const between = /(?:के\s*बीच|के\s*मध्ये|کے\s*درمیان)/i.exec(head);
+  if (between) {
+    const before = head.slice(Math.max(0, between.index - 400), between.index);
+    const line = before.split(/[\n।۔]/).filter((part) => part.trim()).pop() || before;
+    const chunks = line.split(/\s*(?:तथा|एवं|और|اور)\s*/i).filter((c) => c.trim().length > 2);
+    const names = chunks.slice(-2);
+    if (names.length === 2) {
+      names.forEach((chunk, i) => push(nameFromChunk(chunk), localRole(chunk), 'between', 5, Math.max(0, between.index - 300 + i)));
+    }
+  }
+
+  // 2. "… (विक्रेता)" — the role is written in brackets after the name
+  const roleMentions = /[\u0900-\u097F\u0600-\u06FF][^\n()।]{0,80}?\(\s*([^)]{2,25})\s*\)/g;
+  let rm;
+  while ((rm = roleMentions.exec(head))) {
+    const role = localRole(rm[1]);
+    if (!role) continue;
+    const before = head.slice(Math.max(0, rm.index - 120), rm.index + 1);
+    push(nameFromChunk(before), role, 'role', 4, rm.index);
+  }
+
+  // 3. Court heading "… बनाम …" / notice addressee "بنام …"
+  const lines = head.split('\n').map((l) => l.trim());
+  for (let i = 1; i < lines.length; i++) {
+    const word = /^(बनाम|विरुद्ध|بنام|مخالف)$/i.exec(lines[i]);
+    if (!word) continue;
+    const isNoticeStyle = /بنام|مخالف|प्रति/i.test(word[1]);
+    const below = lines.slice(i + 1).find((l) => l.length > 3);
+    const above = [...lines.slice(0, i)].reverse().find((l) => l.length > 3);
+    if (below) push(nameFromChunk(below), isNoticeStyle ? 'Addressee' : (localRole(below) || 'Defendant'), isNoticeStyle ? 'addressed' : 'versus', 4, head.indexOf(below));
+    // In a notice the line over "بنام" is the date or the subject — never a party.
+    if (!isNoticeStyle && above && !HEADING_LINE.test(above)) {
+      push(nameFromChunk(above), localRole(above) || 'Plaintiff', 'versus', 5, head.indexOf(above));
+    }
+    if (below || above) break;
+  }
+
+  // 4. "प्रति, …" addressee block
+  const to = /(?:^|\n)\s*(?:प्रति)\s*[,:\-]?\s*\n?\s*([^\n]{3,70})/i.exec(head);
+  if (to) push(nameFromChunk(to[1]), 'Addressee', 'addressed', 4, to.index);
+
+  return found.sort((a, b) => a.index - b.index).slice(0, 6);
+}
+
+
+
+const CASE_LOCAL = [
+  { re: /((?:वाद|मुकदमा|प्रकरण|अपील|याचिका|आवेदन|प्राथमिकी|एफ\.?\s?आई\.?\s?आर\.?)\s*(?:संख्या|नंबर|नं\.?)\s*[:\-]?\s*(\d{1,6})\s*(?:\/|of|के)\s*(\d{4}))/i, label: 'case' },
+  { re: /((?:مقدمہ|کیس|اپیل|درخواست|ایف\s*آئی\s*آر)\s*(?:نمبر|نمبر۔|نمبر:)\s*[:\-]?\s*(\d{1,6})\s*(?:\/|of)\s*(\d{4}))/i, label: 'case' },
+];
+
+function extractLocalCaseNumbers(text) {
+  const source = foldDigits(String(text || '').slice(0, 40000));
+  const out = [];
+  for (const { re } of CASE_LOCAL) {
+    let m;
+    const global = new RegExp(re.source, 'gi');
+    while ((m = global.exec(source))) out.push(collapse(m[1]));
+  }
+  return out;
+}
+
+
+
+const COURTS_LOCAL = [
+  [/सर्वोच्च\s*न्यायालय|उच्चतम\s*न्यायालय|سپریم\s*کورٹ/i, 'Supreme Court of India'],
+  [/((?:[\u0900-\u097F]+\s+){0,2})उच्च\s*न्यायालय|ہائی\s*کورٹ/i, 'High Court'],
+  [/जिला\s*(?:एवं|व\s*)?(?:सत्र|सेशन)\s*(?:न्यायालय|न्यायाधीश)|ضلع\s*(?:و\s*)?سیشن\s*(?:عدالت|جج)/i, 'District & Sessions Court'],
+  [/न्यायिक\s*मजिस्ट्रेट|ज्यूडिशियल\s*मजिस्ट्रेट|جوڈیشل\s*مجسٹریٹ/i, 'Court of Judicial Magistrate'],
+  [/पारिवारिक\s*न्यायालय|फैमिली\s*कोर्ट|خاندانی\s*عدالت/i, 'Family Court'],
+  [/उप\s*निबंधक|सब\s*रजिस्ट्रार|سب\s*رجسٹرار/i, 'Sub-Registrar Office'],
+  [/तहसीलदार|उप\s*मंडल\s*मजिस्ट्रेट/i, 'Revenue Office'],
+  [/(?:जिला\s*)?उपभोक्ता\s*(?:आयोग|फोरम)|کنزیومر\s*کورٹ/i, 'Consumer Commission'],
+  [/\[?\s*लोक\s*अदालत|لوک\s*عدالت/i, 'Lok Adalat'],
+  [/किराया\s*नियंत्रक|رینٹ\s*کنٹرولر/i, 'Rent Controller'],
+  [/माननीय\s*न्यायालय|न्यायालय|عدالت/i, 'Court'],
+];
+
+function extractLocalCourt(text) {
+  const source = String(text || '').slice(0, 20000);
+  // A bare "न्यायालय / عدالت" only counts as the forum when the paper is actually
+  // a court paper — in a rent agreement it is just the jurisdiction clause.
+  const courtPaper = /(?:आदेश|फैसला|निर्णय|याचिका|वाद\s*संख्या|प्रकरण\s*संख्या|दायर|प्रस्तुत|अपील|حکم|فیصلہ|درخواست|دائر|اپیل|مقدمہ)/.test(source);
+  for (const [re, name] of COURTS_LOCAL) {
+    if (name === 'Court' && !courtPaper) continue;
+    const m = re.exec(source);
+    if (!m) continue;
+    if (name === 'High Court' && m[1]) {
+      const state = collapse(m[1]).split(/\s+/).pop();
+      if (state && state.length > 2) return `${titleCase(transliterate(state))} High Court`;
+    }
+    return name;
+  }
+  return null;
+}
+
+
+
+function extractLocalStatutes(text) {
+  const source = foldDigits(String(text || ''));
+  const out = [];
+  const re = /(?:धारा|دفعتہ|دفعہ)\s*(\d{1,4}[A-Z]?)\s*(?:के\s*अंतर्गत\s*)?((?:[\u0900-\u097F\u0600-\u06FF]+\s*){1,5}(?:अधिनियम|संहिता|ایکٹ|قانون))/g;
+  let m;
+  while ((m = re.exec(source))) {
+    out.push({ section: m[1], act: collapse(m[2]), raw: collapse(m[0]) });
+  }
+  return out;
+}
+
+return { localRole, isLocalName, cleanLocalName, extractLocalParties, extractLocalCaseNumbers, extractLocalCourt, extractLocalStatutes };
+})();
+
+/* src/analysis/entities.js */
+__m['src/analysis/entities.js'] = (function () {
+const { findDates, parseDate, addDays, toIso } = __m['src/util/dates.js'];
+const { collapse, normalize, titleCase, clip } = __m['src/util/text.js'];
+const { foldDigits, scriptLanguage, hasDevanagari, hasArabic } = __m['src/util/script.js'];
+const {
+  extractLocalParties, extractLocalCaseNumbers, extractLocalCourt, extractLocalStatutes, isLocalName,
+} = __m['src/analysis/localized.js'];
+
+
+
+
+
+
+function localizeAmountText(input) {
+  return foldDigits(input)
+    .replace(/[\u060C\u066B\u066C]/g, ',')
+    .replace(/(\d)\s*\/\s*-/g, '$1/-');
+}
+
+const HONORIFIC = /(?:Mr|Mrs|Ms|Dr|Shri|Shrimati|Smt|Late|M\/s|Messrs)\.?/i;
+
+const ACT_NAMES = {
+  ipc: 'Indian Penal Code',
+  bns: 'Bharatiya Nyaya Sanhita',
+  crpc: 'Code of Criminal Procedure',
+  bnss: 'Bharatiya Nagarik Suraksha Sanhita',
+  cpc: 'Code of Civil Procedure',
+  bsa: 'Bharatiya Sakshya Adhiniyam',
+  'ni act': 'Negotiable Instruments Act',
+  'negotiable instruments act': 'Negotiable Instruments Act',
+  'transfer of property act': 'Transfer of Property Act',
+  'registration act': 'Registration Act',
+  'indian contract act': 'Indian Contract Act',
+  'contract act': 'Indian Contract Act',
+  'limitation act': 'Limitation Act',
+  'companies act': 'Companies Act',
+  'hindu marriage act': 'Hindu Marriage Act',
+  hma: 'Hindu Marriage Act',
+  'hindu succession act': 'Hindu Succession Act',
+  'domestic violence act': 'Protection of Women from Domestic Violence Act',
+  'dv act': 'Protection of Women from Domestic Violence Act',
+  rera: 'Real Estate (Regulation and Development) Act',
+  'motor vehicles act': 'Motor Vehicles Act',
+  'consumer protection act': 'Consumer Protection Act',
+  'arbitration and conciliation act': 'Arbitration and Conciliation Act',
+  'arbitration act': 'Arbitration and Conciliation Act',
+  'specific relief act': 'Specific Relief Act',
+  'indian stamp act': 'Indian Stamp Act',
+  'stamp act': 'Indian Stamp Act',
+  'court fees act': 'Court Fees Act',
+  'it act': 'Information Technology Act',
+  'income tax act': 'Income Tax Act',
+  'gst act': 'Central Goods and Services Tax Act',
+  'motor accident claims': 'Motor Vehicles Act',
+  'rent control act': 'Rent Control Act',
+  'right to information act': 'Right to Information Act',
+  rti: 'Right to Information Act',
+  'pocso act': 'POCSO Act',
+  'sc/st act': 'Scheduled Castes and Scheduled Tribes (Prevention of Atrocities) Act',
+  'family courts act': 'Family Courts Act',
+  'maintenance act': 'Protection of Women from Domestic Violence Act',
+  'advocates act': 'Advocates Act',
+  'notaries act': 'Notaries Act',
+};
+
+const COURT_PATTERNS = [
+  { re: /supreme\s+court\s+of\s+india/i, name: 'Supreme Court of India' },
+  { re: /high\s+court\s+of\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i, dynamic: true, suffix: 'High Court' },
+  { re: /([A-Z][a-z]+)\s+high\s+court/i, dynamic: true, suffix: 'High Court' },
+  { re: /district\s*(?:&|and)?\s*sessions?\s+court[,\s]+([A-Z][a-z]+)/i, dynamic: true, suffix: 'District & Sessions Court' },
+  { re: /district\s*(?:&|and)\s*sessions?\s+judge[,\s]+([A-Z][a-z]+)/i, dynamic: true, suffix: 'District & Sessions Court' },
+  { re: /in\s+the\s+court\s+of\s+(?:the\s+)?(?:learned\s+)?(?:additional\s+)?district\s*(?:&|and)\s*sessions?\s+judge[,\s]*([A-Z][a-z]+)/i, dynamic: true, suffix: 'District & Sessions Court' },
+  { re: /family\s+court[,\s]+([A-Z][a-z]+)/i, dynamic: true, suffix: 'Family Court' },
+  { re: /(?:judicial\s+)?magistrate[,\s]+([A-Z][a-z]+)/i, dynamic: true, suffix: 'Court of Judicial Magistrate' },
+  { re: /motor\s+accident\s+claims\s+tribunal/i, name: 'Motor Accident Claims Tribunal' },
+  { re: /\bNCLT\b/i, name: 'National Company Law Tribunal' },
+  { re: /\bDRT\b/i, name: 'Debts Recovery Tribunal' },
+  { re: /consumer\s+(?:disputes\s+)?(?:redressal\s+)?commission/i, name: 'Consumer Commission' },
+  { re: /\bRERA\b/i, name: 'Real Estate Regulatory Authority' },
+  { re: /rent\s+controller/i, name: 'Rent Controller' },
+  { re: /sub[-\s]?registrar/i, name: 'Sub-Registrar Office' },
+  { re: /tehsildar|sub[-\s]?divisional\s+magistrate|\bSDM\b/i, name: 'Revenue Office' },
+  { re: /(?:in|before)\s+the\s+court\s+of\s+(?:the\s+)?([^\n,]{3,60})(?:,?\s*([A-Za-z][a-z]+))?/i, raw: true },
+  { re: /lok\s+adalat/i, name: 'Lok Adalat' },
+  { re: /tribunal/i, name: 'Tribunal' },
+];
+
+const ROLE_WORDS = [
+  'Lessor', 'Lessee', 'Licensor', 'Licensee', 'Landlord', 'Tenant', 'Vendor', 'Vendee',
+  'Seller', 'Purchaser', 'Plaintiff', 'Defendant', 'Petitioner', 'Respondent', 'Complainant',
+  'Accused', 'First Party', 'Second Party', 'Third Party', 'Mortgagor', 'Mortgagee',
+  'Borrower', 'Lender', 'Employer', 'Employee', 'Testator', 'Executor', 'Donor', 'Donee',
+  'Principal', 'Attorney Holder', 'Purchaser', 'Guarantor', 'Partner', 'Client', 'Advocate',
+  'Buyer', 'Owner', 'Assignor', 'Assignee',
+];
+
+const CONNECTORS = new Set(['of', 'and', '&', 'the', 'de', 'da', 'bin', 'binti', 'kumar', 'devi', 'singh', 'lal', 'chand']);
+
+const NAME_STOP = new Set([
+  'the', 'this', 'that', 'these', 'those', 'a', 'an', 'and', 'or', 'but', 'if', 'then', 'so',
+  'to', 'from', 'by', 'for', 'with', 'without', 'under', 'over', 'into', 'upon', 'herein',
+  'shall', 'may', 'will', 'would', 'should', 'must', 'can', 'has', 'have', 'had', 'is', 'are',
+  'was', 'were', 'been', 'being', 'do', 'does', 'did', 'not', 'no', 'any', 'all', 'such',
+  'said', 'above', 'below', 'which', 'who', 'whom', 'whose', 'where', 'when', 'why', 'how',
+  'hereinafter', 'herein', 'called', 'referred', 'known', 'acting', 'through', 'behalf',
+  'aged', 'about', 'years', 'year', 'son', 'daughter', 'wife', 'husband', 'resident',
+  'residing', 'respectively', 'party', 'parties', 'first', 'second', 'third', 'fourth',
+  'court', 'hon', 'honble', "hon'ble", 'learned', 'ld', 'counsel', 'advocate', 'public',
+  'prosecutor', 'versus', 'vs', 'vide', 'dated', 'subject', 'sir', 'madam', 'dear',
+  'witness', 'signature', 'signed', 'name', 'date', 'place', 'notice', 'legal', 'sale',
+  'deed', 'rent', 'agreement', 'order', 'judgment', 'copy', 'page', 'number', 'gstin',
+  'pan', 'aadhaar', 'ifsc', 'account', 'branch', 'invoice', 'total', 'amount', 'taxable',
+  'payment', 'terms', 'description', 'quantity', 'rate', 'value', 'supply', 'units', 'per',
+  'unit', 'authorised', 'authorized', 'signatory', 'for', 'our', 'your', 'their', 'its',
+  'my', 'we', 'i', 'me', 'you', 'he', 'she', 'it', 'they', 'them', 'his', 'her', 'also',
+  'may', 'kindly', 'request', 'requested', 'please', 'hereby', 'thereof', 'therein',
+  'signature', 'verification', 'verified', 'proprietor', 'partner', 'director',
+  'signatory', 'manager', 'client', 'deponent', 'executant', 'witnesses', 'enclosed',
+]);
+
+const ROLE_PATTERN = 'Lessor|Lessee|Licensor|Licensee|Landlord|Tenant|Vendor|Vendee|Seller|Purchaser|Plaintiff|Defendant|Petitioner|Respondent|Complainant|Accused|Applicant|Noticee|Opposite Party|First Party|Second Party|Third Party|Mortgagor|Mortgagee|Borrower|Lender|Employer|Employee|Testator|Executrix|Executor|Donor|Donee|Principal|Attorney Holder|Guarantor|Partner|Client|Advocate|Husband|Wife|Buyer|Owner|Assignor|Assignee|Deponent|Addressee';
+
+function cleanName(raw) {
+  let name = collapse(String(raw || ''))
+    .replace(/^[,;:\-\u2013\u2014()"'\s]+/, '')
+    .replace(/[,;:\-\u2013\u2014()"'\s]+$/, '')
+    .replace(/\s*(?:\.{2,}|…)\s*$/, '')
+    .replace(/\s+(?:hereinafter|herein\s+after)\s+(?:called|referred)[\s\S]*$/i, '')
+    .replace(/\s*,?\s*(?:aged\s+about|aged|s\/o|d\/o|w\/o|r\/o|son\s+of|daughter\s+of|wife\s+of|resident\s+of|residing\s+at)\b[\s\S]*$/i, '')
+    .replace(/,\s*(?:Proprietor|Partner|Director|Authorised\s+Signatory|Authorized\s+Signatory|Manager|Prop\.)\b[\s\S]*$/i, '')
+    .replace(/^For\s+/i, '')
+    .replace(/\s+(?:Proprietor|Partner|Director|Authorised\s+Signatory|Authorized\s+Signatory|Signatory|Manager|Holder)\s*$/i, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  if (name.length > 90) name = name.slice(0, 90).trim();
+  return name;
+}
+
+function hasHonorific(text) {
+  return new RegExp(`^(?:${HONORIFIC.source})\\s`, 'i').test(text);
+}
+
+function looksLikeName(text) {
+  const t = cleanName(text);
+  if (!t || t.length < 3 || t.length > 80) return false;
+  // Devanagari / Arabic-script names have no capital letters to check.
+  if (!/[A-Za-z]/.test(t) && (hasDevanagari(t) || hasArabic(t))) return isLocalName(t);
+  if (/\d{4}/.test(t)) return false;
+  if (/[;:!?]$/.test(t)) return false;
+  if (/\.\.\.|…/.test(t)) return false;
+  const words = t.split(/\s+/).filter(Boolean);
+  if (words.length > 7) return false;
+
+  const honorific = hasHonorific(t);
+  const significant = words.filter((w) => !/^(?:of|and|&|the|de|da|bin|binti)$/i.test(w.replace(/[.,]$/, '')));
+  if (!significant.length) return false;
+
+  // Every significant word must look like part of a name.
+  let capitalised = 0;
+  for (const word of significant) {
+    const bare = word.replace(/[.'\-,]$/, '');
+    if (/^[A-Z]/.test(bare)) { capitalised += 1; continue; }
+    if (CONNECTORS.has(bare.toLowerCase())) continue;
+    return false; // any ordinary lowercase word disqualifies it
+  }
+  if (capitalised === 0) return false;
+  if (!honorific && capitalised < Math.ceil(significant.length * 0.6)) return false;
+
+  if (/^(?:Tax|Invoice|Legal|Rent|Sale|Deed|Notice|Order|Judgment|Receipt|Affidavit|Court|Bank\s+Statement|Memorandum|Articles)\b/i.test(t)
+    && !/(?:Pvt|Private|Limited|Ltd|LLP)$/i.test(t)) return false;
+  if (/\b(?:Tax\s+Invoice|Legal\s+Notice|Sale\s+Deed|Rent\s+Agreement|FIR|Invoice\s+No)\b/i.test(t)) return false;
+
+  // Reject anything that reads like a clause.
+  if (/\b(?:shall|may|will|has|have|been|hereby|wherein|aforesaid)\b/i.test(t)) return false;
+  if (/^(?:state|union|government)\s+of\s+[A-Z]/.test(t)) return true;
+  return true;
+}
+
+function roleNear(text, index, radius = 140) {
+  const window = String(text || '').slice(Math.max(0, index - radius), index + radius);
+  for (const role of ROLE_WORDS) {
+    const re = new RegExp(`\\b${role.replace(/\s+/g, '\\s+')}\\b`, 'i');
+    if (re.test(window)) return titleCase(role);
+  }
+  return null;
+}
+
+const UNIQUE_ROLES = new Set(['Lessor', 'Lessee', 'Vendor', 'Vendee', 'Licensor', 'Licensee', 'Mortgagor', 'Mortgagee', 'Borrower', 'Lender', 'Testator', 'Donor', 'Donee', 'Employer', 'Employee', 'Landlord', 'Tenant', 'Principal', 'Attorney Holder']);
+
+
+function roleInSegment(segment) {
+  const haystack = String(segment || '');
+  let best = null;
+  let bestIndex = Infinity;
+  for (const role of ROLE_WORDS) {
+    const re = new RegExp(`\\b${role.replace(/\s+/g, '\\s+')}\\b`, 'gi');
+    const match = re.exec(haystack);
+    if (match && match.index < bestIndex) {
+      bestIndex = match.index;
+      best = titleCase(role);
+    }
+  }
+  return best;
+}
+
+function firstLine(text) {
+  const lines = String(text || '').split('\n').map((l) => l.trim()).filter((l) => l.length > 2);
+  return lines[0] || String(text || '').slice(0, 120);
+}
+
+
+function extractParties(text) {
+  const source = String(text || '');
+  const head = source.slice(0, 30000);
+  const found = new Map();
+
+  const add = (raw, role, where, priority = 1, index = 0) => {
+    const name = cleanName(raw);
+    if (!looksLikeName(name)) return;
+    // Banks, registrars and other institutions are context, not parties.
+    if (/\b(?:bank|banking|branch|treasury|sub-?registrar|registrar)\b/i.test(name) && priority < 5) return;
+    const key = normalize(name)
+      .replace(/\b(?:mr|mrs|ms|dr|shri|smt|late|m\/s|messrs)\b/g, '')
+      .replace(/[^a-z0-9]/g, '');
+    if (key.length < 3) return;
+    const existing = found.get(key);
+    if (existing) {
+      if (!existing.role && role) existing.role = role;
+      if (priority > existing.wherePriority) {
+        existing.where = where;
+        existing.wherePriority = priority;
+      }
+      return;
+    }
+    found.set(key, { name, role: role || null, where, wherePriority: priority, index });
+  };
+
+  // 1. BETWEEN … AND … — authoritative for agreements, deeds and plaints.
+  const betweenRe = /\bbetween\b([\s\S]{0,320}?)\n?\s*\band\b([\s\S]{0,320}?)(?=\n\s*\n|\n\s*(?:now|whereas|in\s+witness|the\s+terms)\b|\n\s*\d+[.)]|$)/i;
+  const between = betweenRe.exec(source.slice(0, 9000));
+  let authoritative = false;
+  if (between) {
+    authoritative = true;
+    const seg1 = between[1];
+    const seg2 = between[2];
+    const name1 = firstLine(seg1);
+    const name2 = firstLine(seg2);
+    add(name1, roleInSegment(seg1) || roleInSegment(source.slice(between.index, between.index + 500)), 'between', 5, between.index);
+    add(name2, roleInSegment(seg2) || roleInSegment(source.slice(between.index + 200, between.index + 900)), 'between', 5, between.index + 1);
+  }
+
+  // 2. VERSUS blocks — authoritative for court papers.
+  if (!authoritative) {
+    let leftLine = null;
+    let rightLine = null;
+    let versusIndex = 0;
+    const lines = head.split('\n');
+    for (let i = 1; i < lines.length - 1; i++) {
+      const line = lines[i].trim();
+      if (!/^(?:versus|vs\.?|v\.?)$/i.test(line)) continue;
+      const above = [...lines.slice(0, i)].reverse().find((l) => l.trim().length > 2);
+      const below = lines.slice(i + 1).find((l) => l.trim().length > 2);
+      if (!above || !below) continue;
+      leftLine = above.trim();
+      rightLine = below.trim();
+      versusIndex = head.indexOf(above, 0);
+      break;
+    }
+    if (!leftLine) {
+      const inline = /([A-Z][^\n]{3,110}?)\s+versus\s+([A-Z][^\n]{3,110})/i.exec(head);
+      if (inline) {
+        leftLine = inline[1];
+        rightLine = inline[2];
+        versusIndex = inline.index;
+      }
+    }
+    if (leftLine && rightLine) {
+      authoritative = true;
+      const left = leftLine.replace(/\s*(?:\.{2,}|…)[\s\S]*$/, '').replace(/\b(?:Prosecution|Petitioner|Plaintiff|Applicant|Complainant)\b\s*$/i, '').trim();
+      const right = rightLine.replace(/\s*(?:\.{2,}|…)[\s\S]*$/, '').trim();
+      add(left, roleInSegment(left) || roleNear(head, versusIndex, 60), 'versus', 5, versusIndex);
+      add(right, roleInSegment(right) || roleNear(head, versusIndex + leftLine.length, 90), 'versus', 5, versusIndex + 1);
+    }
+  }
+
+  // 3. Labelled roles: "Complainant: Mr Sunil Agarwal", "Accused - Rakesh Kumar"
+  const labelledRe = new RegExp(
+    `\\b(${ROLE_PATTERN})\\s*[:\\-\u2013]\\s*((?:(?:${HONORIFIC.source})[ \\t]+)?[A-Z][A-Za-z.'&\\-]*(?:[ \\t]+[A-Z][A-Za-z.'&\\-]*){0,4})(?=[ \\t]{2,}|\\s*(?:${ROLE_PATTERN})\\b|[\\n,;.]|$)`,
+    'gi',
+  );
+  let match;
+  while ((match = labelledRe.exec(head))) {
+    add(match[2], titleCase(match[1]), 'labelled', 4, match.index);
+  }
+
+  // 4. Self-identification: "I, Mr Rajesh Sharma, aged …" (affidavits, POA, vakalatnama)
+  const selfRe = new RegExp(`\\b(?:I|We)\\s*,\\s*((?:(?:${HONORIFIC.source})[ \\t]+)?[A-Z][A-Za-z.'\\-]+(?:[ \\t]+[A-Z][A-Za-z.'\\-]+){0,4})`, 'g');
+  while ((match = selfRe.exec(head))) {
+    add(match[1], 'Deponent', 'self', 4, match.index);
+  }
+
+  // 5. Notice addressee: "To,\nMrs Anita Mehta"
+  const toRe = /\bTo,?\s*\n+\s*((?:(?:Mr|Mrs|Ms|Dr|Shri|Smt|M\/s|Messrs)\.?\s+)?[A-Z][^\n,;]{2,70})/;
+  const to = toRe.exec(head);
+  if (to) add(to[1], 'Addressee', 'addressee', 3.5, to.index);
+
+  // 6. Names with an honorific (kept for context, ranked below the big three).
+  if (!authoritative) {
+    const honorificRe = new RegExp(`\\b(?:${HONORIFIC.source})[ \\t]+([A-Z][A-Za-z.'\\-]+(?:[ \\t]+[A-Z][A-Za-z.'\\-]+){0,3})`, 'g');
+    while ((match = honorificRe.exec(head))) {
+      const honorific = match[0].match(new RegExp(`^(?:${HONORIFIC.source})\\.?`, 'i'))?.[0] || '';
+      add(`${honorific} ${match[1]}`, roleNear(head, match.index, 70), 'name', 2, match.index);
+    }
+  }
+
+  // 7. Companies and firms.
+  const companyRe = /\b([A-Z][A-Za-z&.'\-]*(?:\s+[A-Z][A-Za-z&.'\-]*){0,4}\s+(?:Private\s+Limited|Pvt\.?\s*Ltd\.?|Limited|Ltd\.?|LLP|Bank|Co-?operative\s+Society|Housing\s+Society|Trust|Enterprises|Industries|Constructions|Developers|Associates))\b/g;
+  while ((match = companyRe.exec(head))) {
+    add(match[1], roleInSegment(match[0]), 'company', 1.5, match.index);
+  }
+
+  // Hindi / Urdu drafting uses its own joins, headings and role words: merge them
+  // in before the ranking so a "… के बीच …" party outranks a passing mention.
+  for (const local of extractLocalParties(source)) {
+    const key = normalize(local.name).replace(/[^\p{L}\p{N}]/gu, '');
+    if (key.length < 3) continue;
+    const existing = found.get(key);
+    if (existing) {
+      if (!existing.role && local.role) existing.role = local.role;
+      if (local.priority > existing.wherePriority) {
+        existing.where = local.where;
+        existing.wherePriority = local.priority;
+      }
+      continue;
+    }
+    found.set(key, { name: local.name, role: local.role || null, where: local.where, wherePriority: local.priority, index: local.index });
+  }
+
+  const ordered = [...found.values()].sort((a, b) => (b.wherePriority - a.wherePriority) || (a.index - b.index));
+
+  // Keep the list focused: when the document states parties clearly, ignore incidental names.
+  const filtered = authoritative
+    ? ordered.filter((p) => p.wherePriority >= 3.5 || p.where === 'labelled')
+    : ordered;
+
+  const usedRoles = new Set();
+  const parties = [];
+  for (const party of filtered) {
+    if (parties.length >= 6) break;
+    let role = party.role;
+    if (role && UNIQUE_ROLES.has(role)) {
+      if (usedRoles.has(role)) role = null;
+      else usedRoles.add(role);
+    }
+    parties.push({ name: party.name, role, where: party.where, strength: party.wherePriority });
+  }
+  return parties;
+}
+
+const SENTENCE_ABBREV = /(?:^|\s)(?:no|nos|rs|inr|sec|sect|vs|mr|mrs|ms|dr|adv|hon|pvt|ltd|co|sl|dt|smt|shri|संख्य|क्र|दि|श्री|अनु)["')\]]?\.$/i;
+
+
+function sentenceStartBefore(source, from, limit) {
+  for (let i = from - 1; i >= limit; i--) {
+    const ch = source[i];
+    if (ch === '।' || ch === '۔' || ch === ';' || ch === '\n') return i + 1;
+    if (ch !== '.') continue;
+    const tail = source.slice(Math.max(0, i - 14), i + 1);
+    if (SENTENCE_ABBREV.test(tail)) continue;
+    if (/\d\.$/.test(tail)) continue;
+    if (i > 0 && /\d/.test(source[i - 1]) && /\d/.test(source[i + 1] || '')) continue;
+    return i + 1;
+  }
+  return limit;
+}
+
+function sentenceEndAfter(source, from, limit) {
+  for (let i = from; i < limit; i++) {
+    const ch = source[i];
+    if (ch === '।' || ch === '۔' || ch === ';' || ch === '\n') return i;
+    if (ch !== '.') continue;
+    const tail = source.slice(Math.max(0, i - 14), i + 1);
+    if (SENTENCE_ABBREV.test(tail)) continue;
+    if (/\d\.$/.test(tail) && /\d/.test(source[i + 1] || '')) continue;
+    return i;
+  }
+  return limit;
+}
+
+
+function extractAmounts(text) {
+  const source = localizeAmountText(String(text || ''));
+  const out = [];
+  const covered = [];
+  const WINDOW = 120;
+
+  const push = (match, digitsRaw, unitRaw) => {
+    const start = match.index;
+    const end = match.index + match[0].length;
+    if (covered.some(([a, b]) => start < b && end > a)) return;
+    covered.push([start, end]);
+    const digits = Number(String(digitsRaw).replace(/,/g, ''));
+    if (!Number.isFinite(digits) || digits <= 0) return;
+    let value = digits;
+    const unit = String(unitRaw || '').toLowerCase();
+    if (/^(?:lakh|lac|लाख|لاکھ)/.test(unit)) value = digits * 100000;
+    else if (/^(?:crore|करोड़|करोड|کروڑ)/.test(unit)) value = digits * 10000000;
+    else if (/^(?:thousand|k$|हज़ार|ہزار)/.test(unit)) value = digits * 1000;
+
+    // Look at the sentence around the figure only, so a label from the next
+    // clause cannot claim it ("… deposit 1,00,000. Rent 25,000 …").
+    const windowStart = Math.max(0, start - WINDOW);
+    const sentStart = sentenceStartBefore(source, start, windowStart);
+    const sentEnd = sentenceEndAfter(source, end, end + WINDOW);
+    const context = collapse(source.slice(sentStart, sentEnd));
+    const anchor = Math.min(context.length, start - sentStart + Math.floor(String(digitsRaw).length / 2));
+    out.push({
+      raw: collapse(match[0]).replace(/^(?:rs\.?|inr)/i, 'Rs.'),
+      value,
+      context,
+      label: guessAmountLabel(context, anchor),
+    });
+  };
+
+  // "Rs. 25,000", "₹1,00,000/-", "रु. 25,000", "روپے 50,000"
+  const prefix = /(?<![A-Za-z\u0900-\u097F\u0600-\u06FF])(?:Rs\.?|INR|₹|रु\.?|रुपये|रुपए|روپے|روپیہ)\s*([\d][\d,]*(?:\.\d{1,2})?)\s*(lakh|lakhs|lac|lacs|crore|crores|thousand|k|लाख|लाखों|करोड़|करोड|करोड़ों|لاکھ|کروڑ|ہزار)?\s*(?:\/-)?/gi;
+  let m;
+  while ((m = prefix.exec(source))) push(m, m[1], m[2]);
+
+  // "25,000 रुपये", "50,000 روپے", "18,000/-" — the Indian postfix style
+  const postfix = /([\d][\d,]*(?:\.\d{1,2})?)\s*(?:\/-|रुपये|रु\.?|روپے|روپیہ)(?!\s*[\d])/g;
+  while ((m = postfix.exec(source))) push(m, m[1], '');
+
+  // Deduplicate: the same figure means the same thing once.
+  const seen = new Set();
+  return out.filter((a) => {
+    const key = String(a.value);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 12);
+}
+
+const AMOUNT_LABELS = [
+  { re: /security\s+deposit|interest[- ]free\s+(?:refundable\s+)?(?:security\s+)?deposit|advance\s+deposit|जमा\s*राशि|अमानत|ضمانتی\s*رقم|امانت/i, label: 'Security deposit' },
+  { re: /monthly\s+rent|rent\s+(?:of|is|payable)|\brent\b|मासिक\s*किराया|किराया|प्रतिमाह|ماہانہ\s*کرایہ|کرایہ/i, label: 'Rent' },
+  { re: /sale\s+consideration|total\s+consideration|purchase\s+price|sale\s+price/i, label: 'Sale consideration' },
+  { re: /damages|compensation|claim|मुआवजा|हर्जाना|ہرجانہ|معاوضہ/i, label: 'Claim amount' },
+  { re: /cheque|dishonou?r|चेक|चैक|چیک/i, label: 'Cheque amount' },
+  { re: /\bfee\b|honorarium|professional\s+fee|फीस|शुल्क|فیس/i, label: 'Fee' },
+  { re: /penalty|interest|\bIGST\b|\bCGST\b|\bSGST\b|\bGST\b/i, label: 'Tax / penalty' },
+  { re: /salary|wages|remuneration/i, label: 'Salary' },
+  { re: /\bloan\b|principal\s+amount/i, label: 'Loan amount' },
+  { re: /total\s+(?:amount\s+)?payable|invoice\s+(?:total|value)|taxable\s+value/i, label: 'Invoice total' },
+  { re: /personal\s+bond|surety/i, label: 'Bond amount' },
+  { re: /costs?\s+of|litigation\s+expenses/i, label: 'Costs' },
+];
+
+function guessAmountLabel(context, amountIndex = -1) {
+  const text = String(context || '');
+  const anchor = amountIndex >= 0 ? amountIndex : Math.floor(text.length / 2);
+  let best = null;
+  let bestDistance = Infinity;
+  for (const entry of AMOUNT_LABELS) {
+    const re = new RegExp(entry.re.source, 'gi');
+    let m;
+    while ((m = re.exec(text))) {
+      const distance = Math.abs(m.index - anchor);
+      // A label written before the figure ("security deposit of Rs 1,00,000")
+      // is a stronger signal than one that merely follows it.
+      const weighted = m.index < anchor ? distance : distance * 2;
+      if (weighted < bestDistance) {
+        bestDistance = weighted;
+        best = entry.label;
+      }
+      if (m.index === re.lastIndex) re.lastIndex += 1;
+    }
+  }
+  return best || 'Amount';
+}
+
+
+function extractReferences(text) {
+  const source = String(text || '');
+  const refs = { caseNumbers: [], fir: [], cheques: [], other: [] };
+
+  const caseRe = /\b(?:O\.?\s?S\.?|C\.?\s?S\.?|R\.?\s?S\.?\s?A\.?|Crl\.?\s?A\.?|Crl\.?\s?M\.?P\.?|W\.?\s?P\.?|C\.?\s?M\.?\s?P\.?|I\.?\s?A\.?|R\.?\s?F\.?\s?A\.?|C\.?\s?M\.?\s?A\.?|S\.?\s?B\.?\s?C\.?|C\.?\s?C\.?|C\.?\s?O\.?\s?M\.?\s?P\.?|ARB\.?|A\.?\s?P\.?|L\.?\s?P\.?\s?A\.?)\s*(?:No\.?\s*)?(\d{1,6})\s*(?:of|\/)\s*(\d{4})/gi;
+  let m;
+  while ((m = caseRe.exec(source))) refs.caseNumbers.push(collapse(m[0]));
+  for (const local of extractLocalCaseNumbers(source)) {
+    if (!refs.caseNumbers.some((existing) => normalize(existing) === normalize(local))) refs.caseNumbers.push(local);
+  }
+  const caseNoRe = /\b(?:case|suit|appeal|petition|application|complaint|petitioner|misc\.?)\s+(?:no\.?\s*)?([A-Z0-9\/\-]{2,20})/gi;
+  while ((m = caseNoRe.exec(source))) {
+    const value = collapse(m[0]);
+    if (/\d/.test(value)) refs.caseNumbers.push(value);
+  }
+  const genericNoRe = /\b((?:[A-Z][A-Za-z.]*[ \t]+){0,4}No\.?[ \t]*\d{1,6}[ \t]*(?:of|\/)[ \t]*\d{4})/g;
+  while ((m = genericNoRe.exec(source))) {
+    const value = collapse(m[1]);
+    if (!refs.caseNumbers.some((c) => c.includes(value))) refs.caseNumbers.push(value);
+  }
+  const firRe = /\bFIR\s*(?:No\.?)?\s*([0-9]{1,5})\s*(?:of|\/)\s*(\d{4})/gi;
+  while ((m = firRe.exec(source))) refs.fir.push(collapse(m[0]));
+  const chequeRe = /\bcheque\s*(?:no\.?|number)?\s*([0-9]{4,12})/gi;
+  while ((m = chequeRe.exec(source))) refs.cheques.push(collapse(m[0]));
+  const otherRe = /\b(?:policy|account|a\/c|loan|invoice|bill|receipt|application|registration|deed|khasra|khata|survey|plot|gata)\s*(?:no\.?|number)?\s*[:\-]?\s*([A-Z0-9\/\-]{3,20})/gi;
+  while ((m = otherRe.exec(source))) {
+    const val = collapse(m[0]);
+    if (!refs.other.includes(val)) refs.other.push(val);
+  }
+
+  for (const key of Object.keys(refs)) refs[key] = [...new Set(refs[key])].slice(0, 8);
+  refs.caseNumbers = refs.caseNumbers
+    .filter((value, _i, all) => !all.some((other) => other !== value && other.length > value.length && other.includes(value)))
+    .sort((a, b) => b.length - a.length)
+    .slice(0, 4);
+  return refs;
+}
+
+
+function extractCourt(text) {
+  const source = String(text || '').slice(0, 30000);
+  for (const pattern of COURT_PATTERNS) {
+    const m = pattern.re.exec(source);
+    if (!m) continue;
+    if (pattern.dynamic && m[1]) {
+      const place = titleCase(m[1].replace(/^(the|of)$/i, '').trim());
+      if (/^(in|the|of|at|before)$/i.test(place)) continue;
+      return `${place} ${pattern.suffix}`;
+    }
+    if (pattern.raw) {
+      const core = titleCase(collapse(m[1] || ''));
+      const place = m[2] ? titleCase(collapse(m[2])) : '';
+      if (core.length >= 4 && !/^(?:the|of|at|in)$/i.test(core)) return clip(place ? `${core}, ${place}` : core, 70);
+    }
+    if (pattern.name) return pattern.name;
+  }
+  // Hindi / Urdu court names ("उच्च न्यायालय", "ضلع و سیشن عدالت").
+  return extractLocalCourt(source);
+}
+
+
+function extractStatutes(text) {
+  const source = String(text || '').slice(0, 200000);
+  const out = [];
+  const sectionRe = /\b(?:section|sec\.?|s\.)\s*(\d{1,4}[A-Z]?(?:\(\d{1,2}\))?(?:\([a-z]\))?)\s*(?:of\s+(?:the\s+)?)?((?:[A-Z][A-Za-z().,'-]*\s*){0,7}?(?:Act|Code|Sanhita|Adhiniyam|Rules|Regulations))\b/gi;
+  let m;
+  while ((m = sectionRe.exec(source))) {
+    const actRaw = collapse(m[2]);
+    out.push({ section: m[1], act: normalizeAct(actRaw), raw: collapse(m[0]) });
+  }
+  const bareActRe = /\b(Indian Penal Code|Bharatiya Nyaya Sanhita|Code of Criminal Procedure|Bharatiya Nagarik Suraksha Sanhita|Code of Civil Procedure|Negotiable Instruments Act|Transfer of Property Act|Registration Act|Indian Contract Act|Specific Relief Act|Hindu Marriage Act|Arbitration and Conciliation Act|Consumer Protection Act|Companies Act|Limitation Act|Information Technology Act|Motor Vehicles Act)\b/gi;
+  while ((m = bareActRe.exec(source))) {
+    const act = normalizeAct(m[1]);
+    if (!out.some((s) => s.act === act && !s.section)) out.push({ section: null, act, raw: m[1] });
+  }
+  for (const local of extractLocalStatutes(source)) out.push(local);
+  const seen = new Set();
+  return out
+    .filter((s) => {
+      const key = `${s.section}|${s.act}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 20);
+}
+
+function normalizeAct(raw) {
+  const key = normalize(raw).replace(/\s+/g, ' ').trim();
+  for (const [alias, full] of Object.entries(ACT_NAMES)) {
+    if (key === alias || key.includes(alias)) return full;
+  }
+  return titleCase(raw);
+}
+
+
+function extractIdentifiers(text) {
+  const source = String(text || '').slice(0, 200000);
+  const ids = {};
+  const pan = source.match(/\b[A-Z]{5}\d{4}[A-Z]\b/);
+  if (pan) ids.pan = pan[0];
+  const gstin = source.match(/\b\d{2}[A-Z]{5}\d{4}[A-Z][A-Z0-9]Z[A-Z0-9]\b/);
+  if (gstin) ids.gstin = gstin[0];
+  const aadhaar = source.match(/\b\d{4}\s?\d{4}\s?\d{4}\b/);
+  if (aadhaar && /\baadhaar|aadhar|uidai\b/i.test(source)) ids.aadhaarMasked = `XXXX XXXX ${aadhaar[0].replace(/\s/g, '').slice(-4)}`;
+  const emails = [...new Set(source.match(/[\w.+-]+@[\w-]+\.[\w.]{2,}/g) || [])].slice(0, 3);
+  if (emails.length) ids.emails = emails;
+  const phones = [...new Set(source.match(/\b(?:\+91[\s-]?)?[6-9]\d{9}\b/g) || [])].slice(0, 4);
+  if (phones.length) ids.phones = phones;
+  const khasra = source.match(/\b(?:khasra|khata|gata|survey|plot)\s*(?:no\.?|number)?\s*[:\-]?\s*([0-9]{1,6}(?:\/\d{1,5})?)/gi);
+  if (khasra) ids.propertyNumbers = [...new Set(khasra.map(collapse))].slice(0, 4);
+  return ids;
+}
+
+
+function extractDeadlines(text, { docDate = null, today = toIso(new Date()) } = {}) {
+  const source = String(text || '');
+  const out = [];
+  const base = docDate || today;
+
+  const withinRe = /\bwithin\s+(\d{1,3}|fifteen|thirty|sixty|ninety|seven|ten|fourteen|twenty[- ]one)\s+(days?|months?)\b([^.\n]{0,90})/gi;
+  const numberWords = {
+    seven: 7, ten: 10, fourteen: 14, fifteen: 15, thirty: 30, sixty: 60, ninety: 90, 'twenty-one': 21, 'twenty one': 21,
+  };
+  let m;
+  while ((m = withinRe.exec(source))) {
+    const n = numberWords[m[1].toLowerCase()] ?? Number(m[1]);
+    if (!Number.isFinite(n)) continue;
+    const isMonths = /month/i.test(m[2]);
+    const due = isMonths ? addMonths(base, n) : addDays(base, n);
+    out.push({
+      kind: 'compliance',
+      title: `Comply within ${n} ${isMonths ? 'months' : 'days'}`,
+      detail: collapse(m[3] || m[0]).slice(0, 180),
+      due_date: due,
+      basis: docDate ? 'counted from the document date' : 'counted from today (no document date found)',
+      confidence: 0.6,
+    });
+  }
+
+  const byDateRe = /\b(?:on\s+or\s+before|not\s+later\s+than|due\s+on|due\s+date|by)\s+([0-9]{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9},?\s*\d{4}|\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/gi;
+  while ((m = byDateRe.exec(source))) {
+    const parsed = parseDate(m[1]);
+    if (!parsed) continue;
+    out.push({
+      kind: 'deadline',
+      title: 'Due date mentioned in document',
+      detail: collapse(m[0]),
+      due_date: parsed.iso,
+      basis: 'stated in the document',
+      confidence: 0.75,
+    });
+  }
+
+  const hearingRe = /\b(?:next\s+(?:date\s+of\s+)?hearing|hearing\s+(?:is\s+)?(?:fixed\s+)?on|listed\s+on)\s*[:\-]?\s*([0-9]{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9},?\s*\d{4})/gi;
+  while ((m = hearingRe.exec(source))) {
+    const parsed = parseDate(m[1]);
+    if (!parsed) continue;
+    out.push({
+      kind: 'hearing',
+      title: 'Hearing date',
+      detail: collapse(m[0]),
+      due_date: parsed.iso,
+      basis: 'stated in the document',
+      confidence: 0.8,
+    });
+  }
+
+  // Tenancy / agreement end date
+  const tenure = extractTenure(source);
+  if (tenure?.end) {
+    out.push({
+      kind: 'expiry',
+      title: `${tenure.months}-month term ends`,
+      detail: tenure.raw,
+      due_date: tenure.end,
+      basis: 'calculated from the commencement date',
+      confidence: 0.7,
+    });
+  }
+
+  const seen = new Set();
+  return out
+    .filter((d) => {
+      const key = `${d.due_date}|${d.title}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return Boolean(d.due_date);
+    })
+    .slice(0, 8);
+}
+
+function addMonths(iso, months) {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + months);
+  if (d.getDate() < day) d.setDate(0);
+  return toIso(d);
+}
+
+
+function extractTenure(text) {
+  const source = String(text || '');
+  const m = /(?:for\s+(?:a\s+)?period\s+of\s+)?(\d{1,2})\s*(months?|years?)\s*(?:commencing|starting|beginning|w\.?e\.?f\.?|from|with\s+effect\s+from)\s*([0-9]{1,2}(?:st|nd|rd|th)?[\s\w,.-]{3,20}\d{4})/i.exec(source);
+  if (!m) return null;
+  const n = Number(m[1]);
+  const months = /year/i.test(m[2]) ? n * 12 : n;
+  const start = parseDate(collapse(m[3]));
+  if (!start) return null;
+  return {
+    months,
+    start: start.iso,
+    end: addMonths(start.iso, months),
+    raw: collapse(m[0]),
+  };
+}
+
+
+function extractDocumentDate(text, { filename = '' } = {}) {
+  const source = String(text || '');
+  const head = source.slice(0, 5000);
+  const candidates = [];
+
+  const collect = (re, priority) => {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(head))) {
+      const parsed = parseDate(collapse(m[1]));
+      if (parsed?.iso) candidates.push({ iso: parsed.iso, index: m.index, priority, confident: parsed.confident });
+    }
+  };
+
+  collect(/(?:^|\n)\s*(?:date|dated|दिनांक|तारीख|تاریخ)\s*[:\-]?\s*([0-9]{1,2}(?:st|nd|rd|th)?[\s\w,.\-]{2,26}\d{4})/gi, 4);
+  collect(/(?:दिनांकित|तारीख|تاریخ)\s*[:\-]?\s*([0-9]{1,2}[\s\w,.\-]{2,26}\d{4})/gi, 4);
+  collect(/this\s+(\d{1,2}(?:st|nd|rd|th)?\s+day\s+of\s+[A-Za-z]+[,\s]+\d{4})/gi, 4);
+  collect(/(?:dated|executed\s+(?:at\s+\w+\s+)?on|made\s+(?:at\s+\w+\s+)?on|entered\s+into\s+on)\s*[:\-]?\s*([0-9]{1,2}(?:st|nd|rd|th)?[\s\w,.\-]{2,26}\d{4})/gi, 2);
+
+  const usable = candidates.filter((c) => {
+    const y = Number(c.iso.slice(0, 4));
+    return y >= 1950 && y <= new Date().getFullYear() + 2;
+  });
+  if (usable.length) {
+    usable.sort((a, b) => (b.priority - a.priority) || (a.index - b.index));
+    return { iso: usable[0].iso, source: 'text', confident: usable[0].confident };
+  }
+
+  const headerDates = findDates(head.slice(0, 1600)).filter((d) => {
+    const y = Number(d.iso.slice(0, 4));
+    return y >= 1950 && y <= new Date().getFullYear() + 2;
+  });
+  if (headerDates.length) return { iso: headerDates[0].iso, source: 'header', confident: false };
+
+  const anywhere = findDates(source).filter((d) => {
+    const y = Number(d.iso.slice(0, 4));
+    return y >= 1950 && y <= new Date().getFullYear() + 2;
+  });
+  if (anywhere.length) return { iso: anywhere[0].iso, source: 'body', confident: false };
+
+  const fromName = /(20\d{2}|19\d{2})[-_.](\d{2})[-_.](\d{2})/.exec(filename);
+  if (fromName) return { iso: `${fromName[1]}-${fromName[2]}-${fromName[3]}`, source: 'filename', confident: false };
+  return null;
+}
+
+function detectLanguage(text) {
+  return scriptLanguage(String(text || '').slice(0, 8000));
+}
+
+
+function findBlanks(text) {
+  const source = String(text || '');
+  const blanks = new Set();
+  const patterns = [
+    /_{4,}/g,
+    /\[(?:insert|fill|specify|mention)[^\]]{0,40}\]/gi,
+    /\bTBD\b/g,
+    /\bXX+\b/g,
+  ];
+  for (const re of patterns) {
+    const matches = source.match(re);
+    if (matches) for (const m of matches) blanks.add(m);
+  }
+  return [...blanks].slice(0, 8);
+}
+
+
+
+return { extractParties, extractAmounts, extractReferences, extractCourt, extractStatutes, extractIdentifiers, extractDeadlines, extractTenure, extractDocumentDate, detectLanguage, findBlanks, ACT_NAMES, ROLE_WORDS };
+})();
+
+/* src/analysis/classify.js */
+__m['src/analysis/classify.js'] = (function () {
+const { DOC_TYPES, TYPE_BY_ID } = __m['src/analysis/taxonomy.js'];
+const { normalize } = __m['src/util/text.js'];
+
+
+
+
+function classifyDocument({ text = '', filename = '', caption = '', mime = '' } = {}) {
+  const head = String(text || '').slice(0, 3000);
+  const body = String(text || '').slice(0, 120000);
+  const name = `${filename} ${caption}`;
+  const normalizedBody = normalize(body);
+  const normalizedHead = normalize(head);
+  const normalizedName = normalize(name);
+
+  const scores = new Map();
+
+  for (const type of DOC_TYPES) {
+    if (type.id === 'photo') continue;
+    let score = 0;
+    const evidence = [];
+    for (const re of type.strong) {
+      const flags = re.flags.includes('i') ? re.flags.replace('g', '') : `${re.flags.replace('g', '')}i`;
+      const inName = new RegExp(re.source, flags).test(normalizedName);
+      const inHead = new RegExp(re.source, flags).test(normalizedHead);
+      const inBody = new RegExp(re.source, flags).test(normalizedBody);
+      if (inName) { score += 7; evidence.push(re.source); }
+      else if (inHead) { score += 5; evidence.push(re.source); }
+      else if (inBody) { score += 3; evidence.push(re.source); }
+    }
+    for (const re of type.weak) {
+      const flags = re.flags.includes('i') ? re.flags.replace('g', '') : `${re.flags.replace('g', '')}i`;
+      const inHead = new RegExp(re.source, flags).test(normalizedHead);
+      const inBody = new RegExp(re.source, flags).test(normalizedBody);
+      const inName = new RegExp(re.source, flags).test(normalizedName);
+      if (inName) score += 1.4;
+      else if (inHead) score += 1.6;
+      else if (inBody) score += 0.7;
+    }
+    if (score > 0) scores.set(type.id, { score, evidence });
+  }
+
+  if (mime.startsWith('image/') || /\.(jpe?g|png|webp|heic|tiff?|bmp)$/i.test(filename)) {
+    scores.set('photo', { score: (scores.get('photo')?.score || 0) + 2, evidence: ['image file'] });
+  }
+
+  const ranked = [...scores.entries()].sort((a, b) => b[1].score - a[1].score);
+  if (!ranked.length) {
+    const fallback = mime.startsWith('image/') ? 'photo' : 'other';
+    return { id: fallback, label: TYPE_BY_ID.get(fallback)?.label || 'Document', score: 0, confidence: 0.2, evidence: [], runnerUp: null };
+  }
+
+  const [bestId, best] = ranked[0];
+  const second = ranked[1];
+  const bestType = TYPE_BY_ID.get(bestId);
+  const gap = second ? best.score - second[1].score : best.score;
+  const confidence = Math.max(
+    0.25,
+    Math.min(0.97, 0.3 + Math.min(best.score, 30) / 40 + Math.min(gap, 8) / 30),
+  );
+
+  return {
+    id: bestId,
+    label: bestType?.label || 'Document',
+    score: Number(best.score.toFixed(2)),
+    confidence: Number(confidence.toFixed(2)),
+    evidence: [...new Set(best.evidence)].slice(0, 5),
+    runnerUp: second ? second[0] : null,
+  };
+}
+
+return { classifyDocument };
+})();
+
+/* src/analysis/analyzer.js */
+__m['src/analysis/analyzer.js'] = (function () {
+const { classifyDocument } = __m['src/analysis/classify.js'];
+const { TYPE_BY_ID } = __m['src/analysis/taxonomy.js'];
+const {
+  extractParties, extractAmounts, extractReferences, extractCourt, extractStatutes,
+  extractIdentifiers, extractDeadlines, extractDocumentDate, detectLanguage, findBlanks, extractTenure,
+} = __m['src/analysis/entities.js'];
+const { sentences, paragraphs, collapse, clip, normalize, titleCase } = __m['src/util/text.js'];
+const { formatDate, toIso, daysBetween } = __m['src/util/dates.js'];
+const { formatIndianCurrency } = __m['src/util/numberWords.js'];
+
+
+
+
+
+
+
+
+const KEY_POINT_HINTS = [
+  /shall\s+(?:pay|refund|deliver|execute|comply|indemnify|vacate|provide)/i,
+  /(?:rent|consideration|deposit|amount|salary|fee)\s+(?:of|is|is\s+fixed|shall\s+be)/i,
+  /(?:terminat|revok|cancel)/i,
+  /(?:notice\s+period|prior\s+written\s+notice)/i,
+  /(?:jurisdiction|arbitration|dispute)/i,
+  /(?:penalty|interest|damages|compensation)/i,
+  /(?:validity|valid\s+for|period\s+of|commencing|effective\s+from)/i,
+  /(?:due|payable|within\s+\d+\s+days)/i,
+  /(?:confidential|non-?disclosure|exclusiv)/i,
+  /(?:renew|extension|option)/i,
+  /(?:signed|executed\s+at|witness)/i,
+];
+
+const CLAUSE_CATEGORIES = [
+  { key: 'notice', pattern: /\b(?:notice|termination|terminate|terminable)\b|सूचना|नोटिस|समाप्ति|اطلاع|نوٹس|ختم/i, label: 'Notice & termination' },
+  { key: 'term', pattern: /\b(?:terms?|tenure|period|duration|commencement|commencing)\b|अवधि|मियाद|مدت/i, label: 'Term' },
+  { key: 'deposit', pattern: /\b(?:deposit|advance|security)\b|जमा|अमानत|ضمانت|امانت/i, label: 'Security deposit' },
+  { key: 'rent', pattern: /\b(?:rent|licen[cs]e\s+fee|consideration|salary|price|payment)\b|किराया|वेतन|भुगतान|کرایہ|تنخواہ|ادائیگی/i, label: 'Payment' },
+  { key: 'renewal', pattern: /\b(?:renewal|renew|extension)\b|नवीनीकरण|تجدید/i, label: 'Renewal' },
+  { key: 'jurisdiction', pattern: /\b(?:jurisdiction|courts?\s+at)\b|अधिकार\s*क्षेत्र|न्यायालय|عدالت|دائرہ\s*اختیار/i, label: 'Jurisdiction' },
+  { key: 'arbitration', pattern: /\b(?:arbitration|arbitrator)\b|माध्यस्थम्|पंच|ثالثی|پنچایت/i, label: 'Arbitration' },
+  { key: 'confidentiality', pattern: /\b(?:confidential|non-?disclosure|nda)\b|गोपनीयता|رازداری/i, label: 'Confidentiality' },
+  { key: 'indemnity', pattern: /\b(?:indemn\w*|liabilit\w*)\b|क्षतिपूर्ति|हानि|تلافی|نقصان/i, label: 'Indemnity & liability' },
+  { key: 'maintenance', pattern: /\b(?:maintenance|repair|whitewash|society\s+charges|electricity|water)\b|रखरखाव|मरम्मत|बिजली|पानी|دیکھ\s*بھال|مرمت|بجلی|پانی/i, label: 'Maintenance & utilities' },
+  { key: 'possession', pattern: /\b(?:possession|handover|vacat\w*)\b|कब्जा|कब्ज़ा|खाली|قبضہ|خالی/i, label: 'Possession' },
+  { key: 'default', pattern: /\b(?:default|breach|penalt\w*|forfeit\w*)\b|उल्लंघन|जुर्माना|विलोप|خلاف\s*ورزی|جرمانہ|ضبط/i, label: 'Default & penalty' },
+  { key: 'assignment', pattern: /\b(?:assign\w*|sublet|sub-?lease|transfer)\b|हस्तांतरण|अंतरण|उपकिराया|منتقلی|ذیلی\s*کرایہ/i, label: 'Assignment' },
+  { key: 'governing', pattern: /\b(?:governing\s+law|entire\s+agreement|amendment|waiver)\b/i, label: 'General' },
+];
+
+function surname(name) {
+  const cleaned = collapse(String(name || '').replace(/^(?:Mr|Mrs|Ms|Dr|Shri|Smt|Late|M\/s|Messrs)\.?\s+/i, ''))
+    .replace(/\b(?:Private|Pvt)\b.*$/i, '')
+    .replace(/\bLtd\.?$/i, '')
+    .trim();
+  const parts = cleaned.split(/\s+/).filter((p) => p && !/^(?:son|daughter|wife|of|s\/o|d\/o|w\/o|r\/o)$/i.test(p));
+  return parts.length ? parts[parts.length - 1] : '';
+}
+
+function partyNames(parties) {
+  return parties.filter((p) => p.name && !/^(?:and|or)$/i.test(p.name));
+}
+
+function filenameHint(filename) {
+  const base = String(filename || '')
+    .replace(/\.[a-z0-9]{2,5}$/i, '')
+    .replace(/\b(?:final|copy|scan|scanned|signed|draft|new|whatsapp|img|image|document|doc|pdf|file)\b/gi, ' ')
+    .replace(/\b(?:19|20)\d{2}\b/g, ' ')
+    .replace(/\b\d{4,}\b/g, ' ')
+    .replace(/[_\-.]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!base || base.length < 3) return '';
+  return titleCase(base).slice(0, 70);
+}
+
+const NOTICE_TYPES = new Set(['legal_notice', 'cheque_bounce_notice', 'notice_reply', 'rent_notice']);
+
+const NATIVE_LABEL = (typeId, language) => {
+  const type = TYPE_BY_ID.get(typeId);
+  if (!type) return null;
+  return language === 'hi' ? type.labelHi : language === 'ur' ? type.labelUr : null;
+};
+
+function buildTitle({ typeLabel, docType = '', parties = [], docDate, caseNumber, reference, filename = '', originalName = '', language = 'en' }) {
+  const strong = partyNames(parties).filter((p) => (p.strength ?? 3) >= 3);
+  const named = strong.length ? strong : [];
+  const addressee = named.find((p) => /addressee/i.test(p.role || ''));
+  const order = addressee ? [addressee, ...named.filter((p) => p !== addressee)] : named;
+  const first = order[0] ? surname(order[0].name) : '';
+  const second = order[1] ? surname(order[1].name) : '';
+  const year = docDate ? docDate.slice(0, 4) : '';
+  const isNotice = NOTICE_TYPES.has(docType) || /notice/i.test(typeLabel);
+  const hint = filenameHint(originalName || filename);
+  // A Hindi paper keeps its Hindi name; the English label stays in the catalogue.
+  const native = NATIVE_LABEL(docType, language);
+  typeLabel = native || typeLabel;
+
+  let title = typeLabel;
+  if (isNotice && first) {
+    const to = language === 'hi' ? 'को' : language === 'ur' ? 'بنام' : 'to';
+    title = language === 'hi' ? `${typeLabel} — ${first} को` : `${typeLabel} — ${to} ${first}`;
+  } else if (first && second && normalize(first) !== normalize(second)) {
+    const versus = language === 'hi' ? ' बनाम ' : language === 'ur' ? ' بنام ' : ' v ';
+    title = `${typeLabel} — ${first}${versus}${second}`;
+  } else if (first) {
+    title = `${typeLabel} — ${first}`;
+  } else if (hint && normalize(hint).startsWith(normalize(typeLabel.split(/[\/(]/)[0]).split(' ')[0])) {
+    title = hint;
+  } else if (hint) {
+    title = `${typeLabel} — ${hint}`;
+  } else if (caseNumber || reference) {
+    title = `${typeLabel} — ${caseNumber || reference}`;
+  }
+  if (year && !title.includes(year) && title.length < 82) title += ` (${year})`;
+  return clip(title, 95);
+}
+
+function scoreSentence(sentence, index, total) {
+  let score = 0;
+  for (const hint of KEY_POINT_HINTS) if (hint.test(sentence)) score += 2;
+  if (/\d/.test(sentence)) score += 0.5;
+  if (sentence.length < 40) score -= 1.5;
+  if (sentence.length > 400) score -= 1;
+  if (/(?:whereas|in witness|before me|notary|signature|thumb)/i.test(sentence)) score -= 1;
+  // Earlier sentences usually carry the operative facts; mild boost.
+  score += Math.max(0, 1 - index / Math.max(10, total)) * 0.8;
+  return score;
+}
+
+const NOISE_LINE = /^(?:[A-Z\s&.,'\-]{4,60})$/;
+
+function keyPoints(text, limit = 5) {
+  const list = sentences(text).filter((s) => {
+    if (s.length < 45 || s.length > 600) return false;
+    if (NOISE_LINE.test(s.trim())) return false;
+    if (/^page\s+\d+\s+of\s+\d+$/i.test(s)) return false;
+    if (/^(?:in\s+the\s+court|before\s+the|to,|date\s*:|subject\s*:)/i.test(s) && s.length < 120) return false;
+    // Headings glued to the opening sentence make poor key points.
+    if (/^(?:rent|sale|legal|power|affidavit|vakalatnama|agreement|deed|notice|fir|invoice|tax)[a-z ]{0,40}\b(?:this|the)\b/i.test(s)) return false;
+    return true;
+  });
+  const scored = list.map((s, i) => ({ sentence: s, score: scoreSentence(s, i, list.length), index: i }));
+  scored.sort((a, b) => b.score - a.score);
+  const picked = [];
+  const used = new Set();
+  for (const item of scored) {
+    if (picked.length >= limit) break;
+    const fingerprint = normalize(item.sentence).slice(0, 60);
+    if (used.has(fingerprint)) continue;
+    used.add(fingerprint);
+    picked.push(item);
+  }
+  return picked.sort((a, b) => a.index - b.index).map((p) => clip(p.sentence, 240));
+}
+
+function extractClauses(text) {
+  const source = String(text || '');
+  if (!source.trim()) return [];
+  const blocks = String(text || '').split(/\n(?=\s*(?:\d{1,2}[.)]|[IVX]{1,4}[.)]|[a-z][.)])\s+)/);
+  const clauses = [];
+  for (const block of blocks) {
+    const trimmed = collapse(block);
+    const headingMatch = /^(?:\d{1,2}[.)]|[IVX]{1,4}[.)]|[a-z][.)])\s*([^.:।۔\n]{2,80})/.exec(trimmed);
+    const heading = headingMatch ? headingMatch[1] : '';
+    // Only real clause blocks make useful "clauses" — skip letters, preambles and recitals.
+    if (!heading) continue;
+    const haystack = `${heading} ${trimmed}`;
+    for (const category of CLAUSE_CATEGORIES) {
+      if (!category.pattern.test(haystack)) continue;
+      if (clauses.some((c) => c.key === category.key)) continue;
+      let body = trimmed.replace(/^(?:\d{1,2}[.)]|[IVX]{1,4}[.)]|[a-z][.)])\s*/, '');
+      if (heading) {
+        body = body.replace(new RegExp(`^${heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[.:।۔\s\-–—]*`, 'i'), '');
+      }
+      clauses.push({
+        key: category.key,
+        label: category.label,
+        heading: clip(heading || category.label, 70),
+        text: clip(body, 320),
+      });
+      break;
+    }
+  }
+  return clauses.slice(0, 8);
+}
+
+function buildSummary({ typeLabel, docType, docDate, parties, amounts, court, caseNumber, clauses, text, language }) {
+  const named = partyNames(parties);
+  const isNotice = /notice/i.test(typeLabel);
+  const addressee = named.find((p) => /addressee/i.test(p.role || ''));
+  const native = NATIVE_LABEL(docType, language);
+  const bits = [];
+  bits.push(`${typeLabel}${native && native !== typeLabel ? ` (${native})` : ''}${docDate ? ` dated ${formatDate(docDate, { long: true })}` : ''}`);
+  if (isNotice && addressee) {
+    bits.push(`addressed to ${addressee.name}`);
+    const other = named.find((p) => p !== addressee);
+    if (other) bits.push(`on behalf of ${other.name}`);
+  } else if (named.length >= 2) {
+    bits.push(`between ${named[0].name}${named[0].role ? ` (${named[0].role})` : ''} and ${named[1].name}${named[1].role ? ` (${named[1].role})` : ''}`);
+  } else if (named.length === 1) {
+    bits.push(`involving ${named[0].name}${named[0].role ? ` (${named[0].role})` : ''}`);
+  }
+  if (court) bits.push(`filed in ${court}`);
+  if (caseNumber) bits.push(`case ${caseNumber}`);
+  let summary = `${bits.join(', ')}.`;
+
+  if (amounts.length) {
+    const top = amounts.slice(0, 2).map((a) => `${a.label.toLowerCase()} ${formatIndianCurrency(a.value)}`).join(', ');
+    summary += ` Key figures: ${top}.`;
+  }
+
+  // For Hindi/Urdu papers the English summary stays factual; the original
+  // wording is shown separately in the card ("original text").
+  const foreign = language === 'hi' || language === 'ur' || language === 'mixed';
+  const importantClause = clauses.find((c) => ['term', 'rent', 'notice', 'jurisdiction', 'arbitration'].includes(c.key) && c.heading && c.heading.length < 40);
+  if (importantClause && !foreign) {
+    summary += ` ${importantClause.label}: ${clip(importantClause.text, 170)}`;
+  } else if (importantClause && foreign) {
+    summary += ` ${importantClause.label}: ${clip(importantClause.text, 150)}`;
+  } else if (!foreign) {
+    const body = keyPoints(text, 1)[0];
+    if (body) summary += ` ${clip(body, 190)}`;
+  }
+
+  if (!String(text || '').trim()) {
+    summary = `${typeLabel}${docDate ? ` dated ${formatDate(docDate)}` : ''} — no readable text inside this file, so it is catalogued by its name, date and caption.`;
+  }
+  if (language === 'hi') summary += ' (Document is in Hindi.)';
+  else if (language === 'ur') summary += ' (Document is in Urdu.)';
+  else if (language === 'mixed') summary += ' (Document mixes Hindi/Urdu and English.)';
+  return clip(summary, 620);
+}
+
+function buildTags({ docType, typeLabel, parties, court, docDate, matterName, language, status }) {
+  const tags = new Set();
+  tags.add(typeLabel.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim());
+  if (docType) tags.add(docType.replace(/_/g, ' '));
+  for (const p of partyNames(parties).slice(0, 3)) {
+    const s = surname(p.name);
+    if (s && s.length > 2) tags.add(s.toLowerCase());
+  }
+  if (court) tags.add(court.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim());
+  if (docDate) tags.add(docDate.slice(0, 4));
+  if (matterName) tags.add(matterName.toLowerCase());
+  if (language === 'hi') tags.add('hindi');
+  if (status === 'scanned') tags.add('scan');
+  return [...tags].filter(Boolean).slice(0, 12);
+}
+
+
+function analyzeDocument({
+  text = '', filename = '', caption = '', mime = '', matterName = '', hints = {},
+  pageTexts = [], caughtBy = 'upload',
+} = {}) {
+  const cleanText = String(text || '').replace(/\u0000/g, ' ').replace(/[ \t]+\n/g, '\n').trim();
+  const combinedForGuess = caption ? `${caption}\n${cleanText.slice(0, 8000)}` : cleanText;
+  const classification = hints.docType && TYPE_BY_ID.has(hints.docType)
+    ? { id: hints.docType, label: TYPE_BY_ID.get(hints.docType).label, confidence: 0.99, evidence: ['set by user'], score: 99, runnerUp: null }
+    : classifyDocument({ text: combinedForGuess, filename, caption, mime });
+
+  const parties = extractParties(combinedForGuess);
+  const amounts = extractAmounts(cleanText);
+  const statutes = extractStatutes(cleanText);
+  const references = extractReferences(combinedForGuess);
+  const court = extractCourt(cleanText);
+  const identifiers = extractIdentifiers(cleanText);
+  const language = detectLanguage(cleanText);
+  const blanks = findBlanks(cleanText);
+  const dateGuess = hints.docDate
+    ? { iso: hints.docDate, source: 'user', confident: true }
+    : extractDocumentDate(cleanText, { filename });
+  const docDate = dateGuess?.iso || null;
+  const caseNumber = references.caseNumbers[0] || null;
+  const tenure = extractTenure(cleanText);
+  const deadlines = extractDeadlines(cleanText, { docDate: docDate || toIso(new Date()) });
+  const clauses = extractClauses(cleanText);
+  const points = keyPoints(cleanText);
+
+  const typeLabel = classification.label;
+  const title = buildTitle({
+    typeLabel, docType: classification.id, parties, docDate, caseNumber,
+    reference: references.other[0], filename, originalName: filename, language,
+  });
+
+  const summary = buildSummary({
+    typeLabel, docType: classification.id, docDate, parties, amounts, court, caseNumber, clauses, text: cleanText, language,
+  });
+
+  const flags = [];
+  if (!cleanText) {
+    flags.push({ level: 'warn', message: 'No readable text — stored and searchable by name, date and caption only.' });
+  }
+  if (classification.confidence < 0.5 && classification.id !== 'photo') {
+    flags.push({ level: 'info', message: `Type uncertain (guessed ${typeLabel}). You can correct it by replying "type ${classification.id} ${'{doc}'}".` });
+  }
+  if (blanks.length) {
+    flags.push({ level: 'warn', message: `Contains ${blanks.length} blank field(s) that may need filling: ${blanks.slice(0, 3).join(', ')}` });
+  }
+  if (tenure?.end && daysBetween(tenure.end) < 0) {
+    flags.push({ level: 'info', message: `The ${tenure.months}-month term ended on ${formatDate(tenure.end)}.` });
+  }
+  if (docDate && daysBetween(docDate) < -1825) {
+    flags.push({ level: 'info', message: 'Document is more than five years old.' });
+  }
+
+  const tags = buildTags({
+    docType: classification.id, typeLabel, parties, court, docDate, matterName, language,
+    status: cleanText ? 'text' : 'scanned',
+  });
+
+  const hasStrongSignal = cleanText.length > 200;
+  const confidence = Number((
+    (hasStrongSignal ? 0.35 : 0.12) +
+    classification.confidence * 0.35 +
+    Math.min(parties.length, 3) * 0.05 +
+    (docDate ? 0.1 : 0) +
+    (caseNumber || court ? 0.05 : 0)
+  ).toFixed(2));
+
+  return {
+    docType: classification.id,
+    typeLabel,
+    typeConfidence: classification.confidence,
+    typeEvidence: classification.evidence,
+    runnerUpType: classification.runnerUp,
+    title,
+    docDate,
+    dateSource: dateGuess?.source || null,
+    dateConfident: Boolean(dateGuess?.confident),
+    parties,
+    amounts,
+    statutes,
+    references,
+    court,
+    caseNumber,
+    identifiers,
+    language,
+    summary,
+    keyPoints: points,
+    clauses,
+    tags,
+    deadlines,
+    tenure,
+    blanks,
+    flags,
+    confidence: Math.min(confidence, 0.98),
+    pageTexts,
+    caughtBy,
+    wordCount: cleanText ? cleanText.split(/\s+/).length : 0,
+  };
+}
+
+function describeAnalysis(analysis) {
+  const lines = [];
+  lines.push(`Type: ${analysis.typeLabel} (${Math.round(analysis.typeConfidence * 100)}% sure)`);
+  if (analysis.docDate) lines.push(`Date: ${formatDate(analysis.docDate, { long: true })}`);
+  if (analysis.parties.length) {
+    lines.push(`Parties: ${analysis.parties.slice(0, 3).map((p) => `${p.name}${p.role ? ` (${p.role})` : ''}`).join('; ')}`);
+  }
+  if (analysis.court) lines.push(`Court: ${analysis.court}`);
+  if (analysis.caseNumber) lines.push(`Case no.: ${analysis.caseNumber}`);
+  if (analysis.amounts.length) lines.push(`Amounts: ${analysis.amounts.slice(0, 3).map((a) => a.raw).join(', ')}`);
+  return lines.join('\n');
+}
+
+return { buildTitle, keyPoints, extractClauses, analyzeDocument, describeAnalysis };
+})();
+
+/* src/search/synonyms.js */
+__m['src/search/synonyms.js'] = (function () {
+
+
+const TERM_SYNONYMS = {
+  rent: ['rent', 'lease', 'tenancy', 'kiraya', 'landlord', 'rental'],
+  lease: ['lease', 'rent', 'tenancy'],
+  kiraya: ['rent', 'lease', 'tenancy'],
+  landlord: ['lessor', 'landlord'],
+  tenant: ['lessee', 'tenant'],
+  deposit: ['deposit', 'advance', 'security'],
+  possession: ['possession', 'vacate', 'handover'],
+  notice: ['notice', 'noticee'],
+  cheque: ['cheque', 'check'],
+  dishonour: ['dishonour', 'dishonor', 'bounce', 'bounced', 'insufficient'],
+  bounce: ['bounce', 'dishonour', 'dishonor', 'insufficient'],
+  loan: ['loan', 'borrow', 'mortgage', 'hypothecation'],
+  sale: ['sale', 'conveyance', 'sell'],
+  registry: ['registry', 'registration', 'sub-registrar'],
+  will: ['will', 'testament', 'bequeath', 'probate'],
+  death: ['death', 'deceased', 'mrityu'],
+  marriage: ['marriage', 'wedding', 'shaadi', 'nikah'],
+  divorce: ['divorce', 'matrimonial', 'dissolution'],
+  maintenance: ['maintenance', 'alimony', 'bharan', 'poshan'],
+  property: ['property', 'plot', 'land', 'flat', 'house', 'makan', 'zameen'],
+  plot: ['plot', 'khasra', 'gata', 'survey'],
+  court: ['court', 'tribunal', 'adalat'],
+  order: ['order', 'judgment', 'decree', 'hukum'],
+  fir: ['fir', 'police', 'station'],
+  police: ['police', 'thana', 'fir'],
+  affidavit: ['affidavit', 'shapath', 'declaration'],
+  advocate: ['advocate', 'counsel', 'lawyer', 'vakil'],
+  vakalatnama: ['vakalatnama', 'vakalat'],
+  stamp: ['stamp', 'duty'],
+  tax: ['tax', 'gst', 'income'],
+  invoice: ['invoice', 'bill', 'billing'],
+  receipt: ['receipt', 'paid', 'payment'],
+  aadhaar: ['aadhaar', 'aadhar', 'uidai'],
+  pan: ['pan', 'permanent account'],
+  bank: ['bank', 'account', 'statement', 'passbook'],
+  salary: ['salary', 'wages', 'pay'],
+  employee: ['employee', 'employment', 'appointment'],
+  employer: ['employer', 'company'],
+  nda: ['nda', 'confidentiality', 'nondisclosure'],
+  arbitration: ['arbitration', 'arbitrator', 'award'],
+  settlement: ['settlement', 'compromise', 'settled'],
+  gift: ['gift', 'donation', 'daan'],
+  power: ['power', 'attorney', 'poa'],
+  attorney: ['attorney', 'poa', 'mukhtar'],
+  mukhtar: ['mukhtar', 'power of attorney'],
+  partition: ['partition', 'batwara', 'division'],
+  batwara: ['batwara', 'partition'],
+  hearing: ['hearing', 'listed', 'sunwai'],
+  urgent: ['urgent', 'priority', 'jaldi'],
+  scanned: ['scan', 'scanned', 'photo'],
+  draft: ['draft', 'drafted', 'template'],
+};
+
+
+const TYPE_HINTS = [
+  { re: /\brent\b|\bkiraya\b|\blease\b|\btenancy\b|\blandlord\b|\btenant\b|किराया|किरायेदार|मकान\s*मालिक|کرایہ|کرایہ\s*دار|مالک\s*مکان/i, ids: ['rent_agreement'] },
+  { re: /sale\s*deed|conveyance|\bregistry\b|विक्रय\s*पत्र|بیع\s*نامہ/i, ids: ['sale_deed'] },
+  { re: /agreements?\s+to\s+sell|bainama|बैनामा|بیعانہ/i, ids: ['agreement_to_sell'] },
+  { re: /gift\s*deed|\bgift\b|दान\s*पत्र|ہبہ/i, ids: ['gift_deed'] },
+  { re: /mortgage|home\s+loan|loan\s+agreement/i, ids: ['mortgage_deed'] },
+  { re: /partition|batwara|family\s+settlement/i, ids: ['partition_deed'] },
+  { re: /power\s+of\s+attorney|\bpoa\b|\bgpa\b|\bspa\b|mukhtar|मुख्तार|अधिकार\s*पत्र|مختار\s*نامہ/i, ids: ['power_of_attorney'] },
+  { re: /\bwills?\b|testaments?|probate|वसीयत|وصیت/i, ids: ['will'] },
+  { re: /cheque\s*bounce|138|dishonou?r|चेक\s*बाउंस|चیک\s*باؤنس/i, ids: ['cheque_bounce_notice'] },
+  { re: /legal\s+notices?|demand\s+notices?|\bnotices?\b|नोटिस|सूचना|विधिक|قانونی|نوٹس|اطلاع/i, ids: ['legal_notice', 'notice_reply'] },
+  { re: /\bplaint\b|\bsuit\b|वाद\s*पत्र|دعویٰ\s*نامہ/i, ids: ['plaint'] },
+  { re: /written\s+statement/i, ids: ['written_statement'] },
+  { re: /petitions?|writs?|bails?|याचिका|درخواست/i, ids: ['petition'] },
+  { re: /complaints?|consumer\s+cases?|शिकायत|شکایت/i, ids: ['complaint'] },
+  { re: /\bfir\b|police|charge\s*sheet|प्राथमिकी|थाना|ایف\s*آئی\s*آر|تھانہ/i, ids: ['fir'] },
+  { re: /judg?ments?|decrees?|court\s+orders?|\borders?\b|आदेश|निर्णय|फैसला|حکم|فیصلہ/i, ids: ['court_order'] },
+  { re: /affidavits?|shapath|शपथ|हलफ़|حلف/i, ids: ['affidavit'] },
+  { re: /vakalatnama|vakalat|वकालतनामा|وکالت/i, ids: ['vakalatnama'] },
+  { re: /\bnoc\b|no[-\s]objection|consent\s+letter|अनापत्ति|عدم\s*اعتراض/i, ids: ['noc'] },
+  { re: /nda|non[-\s]disclosure|confidentiality/i, ids: ['nda'] },
+  { re: /partnership|llp/i, ids: ['partnership_deed'] },
+  { re: /companies\s+act|incorporation|board\s+resolution|moa|aoa/i, ids: ['company_document'] },
+  { re: /appointment\s+letter|employment|salary\s+slip/i, ids: ['employment_contract'] },
+  { re: /settlement|compromise|समझौता|صلح/i, ids: ['settlement'] },
+  { re: /arbitration|arbitrator|माध्यस्थम्|ثالثی/i, ids: ['arbitration'] },
+  { re: /bank\s+statement|passbook|account\s+statement|बैंक\s*विवरण|पासबुक|بینک\s*اسٹیٹمنٹ/i, ids: ['bank_statement'] },
+  { re: /invoices?|\bbills?\b|बीजक|चालान|انوائس|بل/i, ids: ['invoice'] },
+  { re: /receipts?|रसीद|رسید/i, ids: ['receipt'] },
+  { re: /income\s+tax|\bitr\b|\bgst\b|form\s*16/i, ids: ['it_return'] },
+  { re: /khasra|jamabandi|khatauni|7\/12|land\s+record|mutation/i, ids: ['land_record'] },
+  { re: /encumbrance|title\s+search/i, ids: ['encumbrance'] },
+  { re: /aadhaar|aadhar|\bpan\b|passport|driving\s+licen[cs]e|voter/i, ids: ['identity_proof'] },
+  { re: /birth\s+certificate|death\s+certificate|marriage\s+certificate/i, ids: ['certificate'] },
+  { re: /marksheet|degree|diploma|certificate\s+of\s+education/i, ids: ['education'] },
+  { re: /medical|discharge|prescription/i, ids: ['medical'] },
+  { re: /valuation|valuer/i, ids: ['valuation'] },
+  { re: /reply\s+to\s+notice/i, ids: ['notice_reply'] },
+  { re: /\bdrafts?\b|\btemplates?\b/i, ids: ['draft'] },
+  { re: /photos?|scans?|images?/i, ids: ['photo'] },
+];
+
+
+const LOCAL_SYNONYM_GROUPS = [
+  { en: 'notice', words: ['नोटिस', 'सूचना', 'नोटिसें', 'نوٹس', 'اطلاع'] },
+  { en: 'rent', words: ['किराया', 'کرایہ'] },
+  { en: 'deposit', words: ['जमा', 'अमानत', 'ضمانت', 'امانت'] },
+  { en: 'date', words: ['तारीख', 'दिनांक', 'تاریخ'] },
+  { en: 'court', words: ['न्यायालय', 'अदालत', 'عدالت'] },
+  { en: 'case', words: ['वाद', 'मुकदमा', 'प्रकरण', 'مقدمہ', 'کیس'] },
+  { en: 'party', words: ['पक्षकार', 'पक्ष', 'فریق'] },
+  { en: 'amount', words: ['राशि', 'रकम', 'رقم'] },
+  { en: 'terminate', words: ['समाप्त', 'खत्म', 'ختم', 'اختتام'] },
+  { en: 'possession', words: ['कब्जा', 'कब्ज़ा', 'قبضہ'] },
+  { en: 'signature', words: ['हस्ताक्षर', 'दस्तखत', 'دستخط'] },
+  { en: 'witness', words: ['गवाह', 'साक्षी', 'گواہ'] },
+  { en: 'affidavit', words: ['शपथ', 'हलफ़', 'حلف'] },
+];
+
+return { TERM_SYNONYMS, TYPE_HINTS, LOCAL_SYNONYM_GROUPS };
+})();
+
+/* src/search/tokenize.js */
+__m['src/search/tokenize.js'] = (function () {
+const { normalize } = __m['src/util/text.js'];
+
+
+const STOPWORDS = new Set([
+  'a', 'an', 'the', 'and', 'or', 'but', 'if', 'of', 'for', 'to', 'in', 'on', 'at', 'by', 'with',
+  'from', 'as', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am', 'do', 'does', 'did',
+  'have', 'has', 'had', 'i', 'me', 'my', 'mine', 'we', 'our', 'you', 'your', 'he', 'she', 'it',
+  'they', 'them', 'their', 'this', 'that', 'these', 'those', 'there', 'here', 'what', 'which',
+  'who', 'whom', 'when', 'where', 'why', 'how', 'all', 'any', 'some', 'no', 'not', 'so', 'than',
+  'too', 'very', 'can', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'shall',
+  'please', 'kindly', 'just', 'also', 'about', 'into', 'over', 'under', 'again', 'then', 'now',
+  // search chatter
+  'find', 'search', 'show', 'see', 'get', 'give', 'send', 'open', 'display', 'list', 'look',
+  'need', 'want', 'file', 'files', 'document', 'documents', 'doc', 'docs', 'paper', 'papers',
+  'copy', 'copies', 'all', 'any', 'some', 'something', 'anything', 'thing', 'things',
+  'dikhao', 'dhundo', 'dhoondo', 'bhejo', 'bhej', 'chahiye', 'karo', 'kar', 'kro', 'mujhe',
+  'mera', 'meri', 'mere', 'hai', 'hain', 'ka', 'ki', 'ke', 'se', 'me', 'mein', 'ko', 'aur',
+  'wala', 'wali', 'gaya', 'gayi', 'tha', 'thi', 'ho', 'hua', 'please',
+  // vague words that carry little search signal
+  'period', 'time', 'duration', 'term', 'terms', 'detail', 'details', 'info',
+  'information', 'mention', 'mentioned', 'say', 'says', 'said', 'tell', 'know',
+  'explain', 'summary', 'summarise', 'summarize', 'everything', 'something',
+  'anything', 'item', 'items', 'stuff', 'case', 'cases', 'matter', 'matters',
+  'dossier', 'record', 'records',
+  // ── Hindi function words ─────────────────────────────────────────────────
+  'का', 'की', 'के', 'को', 'से', 'में', 'पर', 'और', 'या', 'है', 'हैं', 'था', 'थी', 'थे',
+  'यह', 'वह', 'ये', 'वे', 'इस', 'उस', 'एक', 'भी', 'तो', 'नहीं', 'हो', 'कर', 'किया',
+  'दिखाओ', 'दिखाइए', 'दिखाएं', 'भेजो', 'भेजिए', 'चाहिए', 'मुझे', 'मेरा', 'मेरी', 'मेरे',
+  'खोजो', 'ढूंढो', 'बताओ', 'बताइए', 'क्या', 'कौन', 'कब', 'कहाँ', 'कितना', 'कितने',
+  'फाइल', 'फ़ाइल', 'कागज', 'कागज़', 'दस्तावेज', 'दस्तावेज़', 'मामला', 'मामले',
+  // ── Urdu function words ──────────────────────────────────────────────────
+  'کا', 'کی', 'کے', 'کو', 'سے', 'میں', 'پر', 'اور', 'یا', 'ہے', 'ہیں', 'تھا', 'تھی', 'تھے',
+  'یہ', 'وہ', 'ایک', 'بھی', 'تو', 'نہیں', 'ہو', 'کر', 'کیا', 'دکھاو', 'دکھائیں', 'بھیجو',
+  'بھیجیں', 'چاہیے', 'چاہیے', 'مجھے', 'میرا', 'میری', 'میرے', 'ڈھونڈو', 'بتاو', 'بتائیں',
+  'کیا', 'کون', 'کب', 'کہاں', 'کتنا', 'کتنی', 'فائل', 'کاغذ', 'دستاویز', 'مقدمہ', 'مقدمے',
+]);
+
+const SUFFIXES = ['ings', 'ing', 'edly', 'ed', 'ies', 'es', 's'];
+
+
+function stem(word) {
+  let w = word;
+  if (w.length <= 3) return w;
+  if (/^\d+$/.test(w)) return w;
+  // Devanagari and Arabic-script words are not English: leave them whole and let
+  // the FTS prefix index (2/3/5) handle inflections such as नोटिस → नोटिसें.
+  if (/[\u0900-\u097F\u0600-\u06FF]/.test(w)) return w;
+  for (const suffix of SUFFIXES) {
+    if (w.endsWith(suffix) && w.length - suffix.length >= 3) {
+      if (suffix === 'ies') return `${w.slice(0, -3)}y`;
+      if (suffix === 's' && /(?:ss|us|is)$/.test(w)) return w;
+      return w.slice(0, -suffix.length);
+    }
+  }
+  return w;
+}
+
+function tokenize(text) {
+  return normalize(text)
+    .split(/[^a-z0-9\u0900-\u097F\u0600-\u06FF\u0750-\u077F]+/)
+    .filter((w) => w && w.length > 1 && !STOPWORDS.has(w))
+    .map((w) => stem(w));
+}
+
+
+function queryTokens(text) {
+  return normalize(text)
+    .split(/[^a-z0-9\u0900-\u097F\u0600-\u06FF\u0750-\u077F]+/)
+    .filter((w) => w && w.length > 1 && !STOPWORDS.has(w));
+}
+
+function escapeFts(term) {
+  return `"${String(term).replace(/"/g, '""')}"`;
+}
+
+return { stem, tokenize, queryTokens, escapeFts, STOPWORDS };
+})();
+
+/* src/search/queryParser.js */
+__m['src/search/queryParser.js'] = (function () {
+const { relativeRange, MONTHS, LOCAL_MONTH_WORDS, localizeDateText } = __m['src/util/dates.js'];
+const { normalize, collapse } = __m['src/util/text.js'];
+const { TYPE_HINTS } = __m['src/search/synonyms.js'];
+const { queryTokens } = __m['src/search/tokenize.js'];
+
+
+
+
+
+const COMMAND_PREFIX = /^\s*(?:please\s+)?(?:can\s+you\s+)?(?:kindly\s+)?(?:find|search(?:\s+for)?|show(?:\s+me)?|get(?:\s+me)?|give(?:\s+me)?|send(?:\s+me)?|open|display|list|look\s+for|pull\s+up|dikhao|dhundo|dhoondo|bhejo|chahiye)\b\s*/i;
+
+const DATE_PHRASES = [
+  'today', 'yesterday', 'this week', 'last week', 'this month', 'last month',
+  'previous month', 'this year', 'last year', 'previous year', 'aaj', 'pichle mahine',
+  'is mahine', 'pichle saal', 'is saal', 'is hafte',
+  // Hindi / Urdu forms of the same phrases
+  'आज', 'कल', 'इस हफ्ते', 'इस हफ़्ते', 'पिछले हफ्ते', 'पिछले हफ़्ते', 'इस महीने', 'इस माह',
+  'पिछले महीने', 'पिछले माह', 'इस साल', 'पिछले साल',
+  'آج', 'کل', 'اس ہفتے', 'گزشتہ ہفتے', 'اس ماہ', 'اس مہینے', 'گزشتہ ماہ', 'پچھلے مہینے',
+  'اس سال', 'گزشتہ سال', 'پچھلے سال',
+];
+
+const LOCAL_MONTH_ALT = Object.keys(LOCAL_MONTH_WORDS)
+  .sort((a, b) => b.length - a.length)
+  .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  .join('|');
+const LOCAL_MONTH_YEAR = new RegExp(`(${LOCAL_MONTH_ALT})(?:\\s*(\\d{4}))?`);
+
+const SORT_HINTS = [
+  { re: /\b(?:latest|newest|most\s+recent|recent|last\s+one|new\s+one)\b/i, sort: 'newest' },
+  { re: /\b(?:oldest|earliest|first\s+one|original\s+one)\b/i, sort: 'oldest' },
+];
+
+
+function parseQuery(raw, { matters = [] } = {}) {
+  const original = String(raw || '').trim();
+  let text = original;
+  const plan = {
+    raw: original,
+    cleaned: '',
+    terms: [],
+    typeIds: [],
+    dateRange: null,
+    matterId: null,
+    matterName: null,
+    tags: [],
+    limit: 8,
+    sort: 'relevance',
+    flags: {},
+    relaxable: false,
+  };
+
+  // #tags
+  plan.tags = [...text.matchAll(/#([a-zA-Z0-9_-]{2,30})/g)].map((m) => m[1].toLowerCase());
+  text = text.replace(/#[a-zA-Z0-9_-]{2,30}/g, ' ');
+
+  // explicit document id
+  const idMatch = /\b([DMB]\d{1,6})\b/i.exec(text);
+  if (idMatch) {
+    plan.docId = idMatch[1].toUpperCase();
+    text = text.replace(idMatch[0], ' ');
+  }
+
+  // flags
+  if (/\b(?:unfiled|unsorted|no\s+case|not\s+filed|orphan|bina\s+case)\b/i.test(text)) {
+    plan.flags.unfiled = true;
+    text = text.replace(/\b(?:unfiled|unsorted|no\s+case|not\s+filed|orphan|bina\s+case)\b/gi, ' ');
+  }
+  if (/\b(?:needs?\s+review|to\s+check|doubtful|verify|review)\b/i.test(text)) {
+    plan.flags.needsReview = true;
+    text = text.replace(/\b(?:needs?\s+review|to\s+check|doubtful|verify|review)\b/gi, ' ');
+  }
+  if (/\b(?:scanned|scan|photo)\b/i.test(text)) plan.flags.scanned = true;
+
+  // limit: "first 5", "top 3", "last 10"
+  const limitMatch = /\b(?:first|top|last|show)\s+(\d{1,2})\b/i.exec(text);
+  if (limitMatch) {
+    plan.limit = Math.max(1, Math.min(25, Number(limitMatch[1])));
+    text = text.replace(limitMatch[0], ' ');
+  }
+
+  // sort
+  for (const hint of SORT_HINTS) {
+    if (hint.re.test(text)) {
+      plan.sort = hint.sort;
+      text = text.replace(hint.re, ' ');
+      break;
+    }
+  }
+
+  // dates — check every recognised phrase in the text
+  const lower = normalize(text);
+  const rangeCandidates = [];
+  for (const phrase of DATE_PHRASES) if (lower.includes(phrase)) rangeCandidates.push(phrase);
+  const localMonth = LOCAL_MONTH_YEAR.exec(text);
+  if (localMonth) rangeCandidates.push(collapse(localMonth[0]));
+  const monthYear = /\b(?:in\s+)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?:\s+(\d{4}))?\b/i.exec(text);
+  if (monthYear) rangeCandidates.push(monthYear[0].replace(/^in\s+/i, ''));
+  const yearOnly = /\b(19\d{2}|20\d{2})\b/.exec(text);
+  if (yearOnly && !monthYear) rangeCandidates.push(yearOnly[1]);
+  const lastN = /\blast\s+(\d{1,2})\s+(days?|weeks?|months?)\b/i.exec(text);
+  if (lastN) rangeCandidates.push(lastN[0]);
+  // "पिछले 3 महीने" / "گزشتہ 3 ماہ" → "last 3 months"
+  const lastNLocal = /(?:पिछले|पिछला|گزشتہ|پچھلے)\s*(\d{1,2})\s*(दिन|दिवस|सप्ताह|हफ्ते|हफ़्ते|महीने|माह|دن|ہفتے|ماہ|مہینے)/.exec(text);
+  if (lastNLocal) {
+    const unit = /दिन|दिवस|دن/.test(lastNLocal[2]) ? 'days'
+      : /सप्ताह|हफ|ہفت/.test(lastNLocal[2]) ? 'weeks' : 'months';
+    rangeCandidates.push(`last ${lastNLocal[1]} ${unit}`);
+  }
+
+  for (const candidate of rangeCandidates) {
+    // Local month names are understood by translating just the probe string.
+    const range = relativeRange(candidate) || relativeRange(localizeDateText(candidate));
+    if (!range) continue;
+    plan.dateRange = range;
+    if (!text.replace(new RegExp(candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ').trim().length
+        || new RegExp(candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(text)) {
+      text = text.replace(new RegExp(candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ');
+    } else {
+      // Candidate came from a translated probe: strip the original local phrase.
+      const localMatch = LOCAL_MONTH_YEAR.exec(text);
+      if (localMatch && /^(?:last|previous)\b/.test(candidate) === false) text = text.replace(localMatch[0], ' ');
+    }
+    break;
+  }
+
+  // matter — explicit phrasings first, then any party name in the query
+  const explicitMatter = (() => {
+    const m1 = /(?:case|matter|file|client)\s+(?:of\s+|named\s+|called\s+)?(?:mr\.?|mrs\.?|ms\.?)?([a-z][a-z\s.'-]{2,40}?)(?=\s+(?:cases?|matters?|documents?|files?|from|dated|in|of)\b|$)/i.exec(text);
+    if (m1) return collapse(m1[1]);
+    const m2 = /((?:[A-Za-z][\w.'-]*\s+){0,4})(?:cases?|matters?|files?)\b/i.exec(text);
+    if (m2) return collapse(m2[1]);
+    const m3 = /\b(?:everything|all|documents?)\s+(?:in|of|from)\s+(?:the\s+)?(.+)$/i.exec(text);
+    if (m3) return collapse(m3[1]);
+    return null;
+  })();
+
+  const scoreMatters = (needle) => {
+    const q = normalize(needle || '')
+      .replace(/\b(?:case|matter|file|client|the|of|named|called|everything|all|from|in|show|me|documents?|files?)\b/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (q.length < 3) return [];
+    const tokens = [...new Set(q.split(/[^a-z0-9]+/).filter((t) => t.length > 2))];
+    if (!tokens.length) return [];
+    return matters.map((m) => {
+      const title = normalize(m.title || '');
+      const hay = `${title} ${normalize(m.client || '')} ${normalize(m.opposite || '')} ${normalize(m.case_number || '')}`;
+      let score = 0;
+      if (title === q || normalize(m.id) === q) score += 20;
+      if (q.length >= 4 && title.includes(q)) score += 6;
+      for (const token of tokens) {
+        if (/^\d{4}$/.test(token)) continue;
+        if (title.includes(token)) score += 3;
+        else if (hay.includes(token)) score += 1;
+      }
+      return { matter: m, score };
+    }).filter((entry) => entry.score >= 3).sort((a, b) => b.score - a.score);
+  };
+
+  const explicitCandidates = scoreMatters(explicitMatter);
+  const candidates = explicitCandidates.length ? explicitCandidates : scoreMatters(text);
+  if (candidates.length) {
+    const top = candidates[0];
+    plan.matterId = top.matter.id;
+    plan.matterName = top.matter.title;
+    plan.matterCandidates = candidates.slice(0, 4).map((c) => ({ id: c.matter.id, title: c.matter.title, score: c.score }));
+    if (candidates[1] && top.score - candidates[1].score <= 1 && top.score >= 3) plan.matterAmbiguous = true;
+    // Strip the case words out of the free-text terms.
+    const words = normalize(`${top.matter.title} ${top.matter.client || ''}`).split(/[^a-z]+/).filter((w) => w.length > 3);
+    for (const word of words) text = text.replace(new RegExp(`\\b${word}\\b`, 'ig'), ' ');
+    if (explicitMatter) text = text.replace(new RegExp(explicitMatter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ');
+  }
+
+  // document types
+  for (const hint of TYPE_HINTS) {
+    if (hint.re.test(text) || hint.re.test(original)) {
+      for (const id of hint.ids) if (!plan.typeIds.includes(id)) plan.typeIds.push(id);
+      // The words stay in the query too: "notice period" must still search for "period".
+      hint.re.lastIndex = 0;
+    }
+  }
+
+  // command words + filler
+  text = text.replace(COMMAND_PREFIX, ' ');
+  text = text.replace(/\b(?:dated?|from|of|in|on|by|about|regarding|related|to|the|a|an|please|kindly|wala|wali|mera|meri|mere|mujhe|kar|karo|kro|do|dena|dijiye)\b/gi, ' ');
+
+  plan.terms = [...new Set(queryTokens(text))].slice(0, 8);
+  plan.cleaned = collapse(text);
+  plan.relaxable = Boolean(plan.typeIds.length || plan.dateRange || plan.matterId);
+
+  if (plan.sort === 'relevance' && !plan.terms.length && (plan.typeIds.length || plan.dateRange || plan.matterId || plan.flags.unfiled)) {
+    plan.sort = 'newest';
+  }
+
+  return plan;
+}
+
+
+function describePlan(plan) {
+  const bits = [];
+  if (plan.matterName) bits.push(`case “${plan.matterName}”`);
+  if (plan.typeIds.length) bits.push(`type ${plan.typeIds.join('/')}`);
+  if (plan.dateRange) bits.push(`dated ${plan.dateRange.label}`);
+  if (plan.tags.length) bits.push(`tag #${plan.tags.join(' #')}`);
+  if (plan.terms.length) bits.push(`words: ${plan.terms.join(', ')}`);
+  if (plan.flags.unfiled) bits.push('unfiled only');
+  if (plan.flags.needsReview) bits.push('needs review');
+  return bits.join(' · ');
+}
+
+
+
+return { parseQuery, describePlan, MONTHS };
+})();
+
+/* src/ingest/ecourts-parse.js */
+__m['src/ingest/ecourts-parse.js'] = (function () {
+const { normalize, collapse, clip } = __m['src/util/text.js'];
+const { parseDate } = __m['src/util/dates.js'];
+
+
+
+
+
+const FIELD_LABELS = [
+  { key: 'cnr', re: /^(?:cnr\s*(?:number|no\.?)?|सी\s*एन\s*आर(?:\s*संख्या)?|سی\s*این\s*آر(?:\s*نمبر)?)$/i },
+  { key: 'case_number', re: /^(?:case\s*(?:number|no\.?)|case\s*no|द्वारा\s*संख्या|वाद\s*संख्या|मुकदमा\s*संख्या|केस\s*संख्या|مقدمہ\s*نمبر|کیس\s*نمبر|درخواست\s*نمبر)$/i },
+  { key: 'petitioner', re: /^(?:petitioner(?:\(?s\)?)?|complainant(?:\(?s\)?)?|plaintiff(?:\(?s\)?)?|appellant(?:\(?s\)?)?|याचिकाकर्ता|वादी|शिकायतकर्ता|مدعی|درخواست\s*دہندہ)$/i },
+  { key: 'respondent', re: /^(?:respondent(?:\(?s\)?)?|defendant(?:\(?s\)?)?|opposite\s*party|प्रतिवादी|विरोधी\s*पक्ष|مدعا\s*علیہ|مخالف\s*فریق)$/i },
+  { key: 'court', re: /^(?:court(?:\s*name)?|न्यायालय|अदालत|عدالت)$/i },
+  { key: 'status', re: /^(?:case\s*status|status|स्थिति|हालत|کیس\s*کی\s*حیثیت|حیثیت|صورت\s*حال)$/i },
+  { key: 'stage', re: /^(?:stage(?:\s*of\s*case)?|चरण|अवस्था|مرحلہ|اسٹیج)$/i },
+  { key: 'filing_date', re: /^(?:filing\s*date|date\s*of\s*filing|दाखिल\s*करने\s*की\s*तारीख|फाइलिंग\s*तारीख|دائر\s*کرنے\s*کی\s*تاریخ)$/i },
+  { key: 'next_hearing', re: /^(?:next\s*hearing(?:\s*date)?|next\s*date|date\s*of\s*next\s*hearing|अगली\s*सुनवाई(?:\s*की\s*तारीख)?|अगली\s*तारीख|اگلی\s*سماعت(?:\s*کی\s*تاریخ)?)$/i },
+  { key: 'last_hearing', re: /^(?:last\s*hearing(?:\s*date)?|previous\s*hearing|पिछली\s*सुनवाई|پچھلی\s*سماعت)$/i },
+  { key: 'acts', re: /^(?:acts?|sections?|under\s*act(?:\(?s\)?)?|धारा(?:एं)?|अधिनियम|دفعہ|دفعات|ایکٹ)$/i },
+  { key: 'police_station', re: /^(?:police\s*station|ps|थाना|تھانہ)$/i },
+  { key: 'fir_number', re: /^(?:fir\s*(?:number|no\.?)?|एफ\s*आई\s*आर(?:\s*संख्या)?|ایف\s*آئی\s*آر)$/i },
+];
+
+const SEPARATOR = /\s*(?::|：|\||\t|\s-\s|=)\s*/;
+const CNR_RE = /\b([A-Z]{2}[A-Z0-9]{2}\d{12,16}|\d{16})\b/;
+
+function cleanValue(value) {
+  const out = String(value || '')
+    .replace(/\u0000/g, '')
+    .replace(/^[\s:：|\-–—]+/, '')
+    .replace(/[\s|]+$/, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return out;
+}
+
+function labelKey(label) {
+  const l = normalize(label)
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[.:()\[\]|]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  for (const entry of FIELD_LABELS) if (entry.re.test(l)) return entry.key;
+  return null;
+}
+
+function isoOrNull(value) {
+  if (!value) return null;
+  const parsed = parseDate(value);
+  return parsed?.iso || null;
+}
+
+
+function splitBlocks(text) {
+  const clean = String(text || '').replace(/\r\n?/g, '\n').replace(/\u0000/g, '');
+  const lines = clean.split('\n');
+  const blocks = [];
+  let current = [];
+  let seenCaseLabel = false;
+  const push = () => {
+    if (current.some((l) => l.trim())) blocks.push(current.join('\n'));
+    current = [];
+  };
+  const hasCnr = /\b[A-Z]{2}[A-Z0-9]{2}\d{12,16}\b/i.test(clean);
+  for (const line of lines) {
+    const isCnrLine = /cnr|सी\s*एन\s*आर|سی\s*این\s*آر/i.test(line) && CNR_RE.test(line);
+    const isCaseNoLine = /^(?:case\s*(?:number|no)|वाद\s*संख्या|मुकदमा\s*संख्या|مقدمہ\s*نمبر|کیس\s*نمبر)/i.test(line.trim());
+    if (hasCnr) {
+      if (isCnrLine && (seenCaseLabel || current.length > 3)) { push(); seenCaseLabel = false; }
+      if (isCnrLine) seenCaseLabel = true;
+      current.push(line);
+    } else {
+      if (isCaseNoLine && seenCaseLabel) { push(); seenCaseLabel = false; }
+      if (isCaseNoLine) seenCaseLabel = true;
+      current.push(line);
+    }
+  }
+  push();
+  return blocks;
+}
+
+
+function parseBlock(block) {
+  const record = {};
+  const extraLines = [];
+  for (const rawLine of block.split('\n')) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const sep = SEPARATOR.exec(line);
+    if (!sep) { extraLines.push(line); continue; }
+    const label = line.slice(0, sep.index).trim();
+    const value = cleanValue(line.slice(sep.index + sep[0].length));
+    const key = labelKey(label);
+    if (key && value) {
+      record[key] = record[key] ? `${record[key]}, ${value}` : value;
+    } else if (!key) {
+      extraLines.push(line);
+    }
+  }
+
+  // Fall back to a body scan when the dump is a run-on paragraph.
+  const body = block;
+  const cnr = record.cnr || (CNR_RE.exec(body)?.[1] ?? null);
+  if (cnr) record.cnr = String(cnr).toUpperCase().replace(/\s+/g, '');
+
+  record.filing_date = isoOrNull(record.filing_date);
+  record.next_hearing = isoOrNull(record.next_hearing);
+  record.last_hearing = isoOrNull(record.last_hearing);
+
+  record.cnr = record.cnr || null;
+  record.case_number = record.case_number || null;
+  record.court = record.court || null;
+  record.petitioner = record.petitioner || null;
+  record.respondent = record.respondent || null;
+  record.status = record.status || null;
+  record.stage = record.stage || null;
+  record.acts = record.acts || null;
+  record.police_station = record.police_station || null;
+  record.fir_number = record.fir_number || null;
+
+  if (!record.title) {
+    const parties = [record.petitioner, record.respondent].filter(Boolean);
+    if (parties.length === 2) record.title = `${parties[0]} v ${parties[1]}`;
+    else if (parties.length === 1) record.title = parties[0];
+    else if (record.case_number) record.title = `Case ${record.case_number}`;
+  }
+  record.raw = clip(block.trim(), 4000);
+  record.extra = extraLines.slice(0, 8).join(' · ');
+  const meaningful = record.cnr || record.case_number || record.petitioner || record.respondent || record.title;
+  return meaningful ? record : null;
+}
+
+
+function parseEcourtsText(text) {
+  const batches = Array.isArray(text) ? text : [text];
+  const out = [];
+  const seen = new Set();
+  for (const batch of batches) {
+    for (const block of splitBlocks(batch)) {
+      const record = parseBlock(block);
+      if (!record) continue;
+      const key = record.cnr || normalize(`${record.case_number || ''}|${record.title || ''}`);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(record);
+    }
+  }
+  return out;
+}
+
+
+function looksLikeEcourts(filename = '', text = '') {
+  const name = String(filename || '').toLowerCase();
+  const body = String(text || '');
+  if (/ecourt|court-?status|case-?status/.test(name)) return true;
+  const hits = [
+    /cnr\s*(?:number|no)/i,
+    /e-?courts?/i,
+    /case\s*status/i,
+    /next\s*hearing\s*date/i,
+    /सी\s*एन\s*आर/,
+    /अगली\s*सुनवाई/,
+    /سی\s*این\s*آر/,
+    /اگلی\s*سماعت/,
+  ].filter((re) => re.test(body)).length;
+  return hits >= 2;
+}
+
+return { splitBlocks, parseEcourtsText, looksLikeEcourts };
+})();
+
+const ENGINE = { analyzeDocument: __m["src/analysis/analyzer.js"].analyzeDocument, parseQuery: __m["src/search/queryParser.js"].parseQuery, queryTokens: __m["src/search/tokenize.js"].queryTokens, normalize: __m["src/util/text.js"].normalize, clip: __m["src/util/text.js"].clip, slugify: __m["src/util/text.js"].slugify, parseEcourtsText: __m["src/ingest/ecourts-parse.js"].parseEcourtsText, looksLikeEcourts: __m["src/ingest/ecourts-parse.js"].looksLikeEcourts, formatDate: __m["src/util/dates.js"].formatDate, daysBetween: __m["src/util/dates.js"].daysBetween, toIso: __m["src/util/dates.js"].toIso, DOC_TYPES: __m["src/analysis/taxonomy.js"].DOC_TYPES };
+</script>
+<script>
+/* Offline UI — plain browser script, no modules, no network.
+ * ENGINE (bundled analysis code) is already defined when this runs. */
+(function () {
+  'use strict';
+
+  var KEY = 'xdm.offline.v1';
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+  var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+  /* ── storage ─────────────────────────────────────────────────── */
+
+  var memoryOnly = false;
+  var store = null;
+
+  function loadStore() {
+    if (store) return store;
+    try {
+      var raw = window.localStorage.getItem(KEY);
+      store = raw ? JSON.parse(raw) : { version: 1, docs: [], cases: [] };
+    } catch (err) {
+      memoryOnly = true;
+      store = { version: 1, docs: [], cases: [] };
+    }
+    if (!Array.isArray(store.docs)) store.docs = [];
+    if (!Array.isArray(store.cases)) store.cases = [];
+    return store;
+  }
+
+  function renderStorageNote() {
+    var note = $('#storage-note');
+    if (note) note.textContent = memoryOnly ? t('toast.full') : '';
+  }
+
+  function saveStore() {
+    if (memoryOnly) return false;
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(store));
+      return true;
+    } catch (err) {
+      memoryOnly = true;
+      renderStorageNote();
+      toast(t('toast.full'));
+      return false;
+    }
+  }
+
+  /* ── language ────────────────────────────────────────────────── */
+
+  var DICT = {
+    en: {
+      'top.sub': 'Offline edition — works without a server',
+      'tab.docs': 'Documents', 'tab.courts': 'eCourts', 'tab.more': 'Backup & help',
+      'add.title': 'Add a paper',
+      'add.note': 'Paste the text of a rent agreement, notice, order, affidavit — English, हिंदी or اردو. It is read on this phone; nothing is uploaded.',
+      'add.ph': 'Paste the text here…', 'add.file': 'Choose a .txt file',
+      'add.name': 'File name (optional)', 'add.save': 'Read and save',
+      'search.ph': 'Ask: rent agreement Sharma, notices last month, पिछले महीने के नोटिस',
+      'search.go': 'Ask',
+      'ec.title': 'eCourts memory',
+      'ec.note': 'Paste or choose the eCourts Case Status text once. Every CNR, court, stage and next hearing date is kept on this phone for good.',
+      'ec.ph': 'Paste the eCourts case status text here…', 'ec.file': 'Choose a .txt file',
+      'ec.save': 'Remember these cases', 'ec.search': 'CNR number, party name, or “next hearing”',
+      'backup.title': 'Backup',
+      'backup.note': 'Everything on this phone, in one file you can keep or move to another device.',
+      'backup.export': 'Download backup', 'backup.import': 'Restore from backup',
+      'backup.wipe': 'Delete everything on this phone',
+      'help.title': 'What this can do',
+      'help.one': 'Read English, Hindi and Urdu papers: type, date, parties with roles, amounts, court, case numbers and sections.',
+      'help.two': 'Search in any of the three languages — by party, type, month or year.',
+      'help.three': 'Keep eCourts case status text forever: ecourts, next hearing, or a CNR number.',
+      'help.four': 'No server, no account, no upload. PDF and Word files need the hosted version — here paste the text or send a .txt.',
+      'help.ios': 'Tip: in Safari tap Share → Add to Home Screen to keep it as an app.',
+      'foot.line': 'Runs entirely on this device.',
+      'doc.delete': 'Delete this paper',
+      'toast.saved': 'Read and saved', 'toast.full': 'This phone’s storage is full — export a backup, then delete old papers.',
+      'toast.deleted': 'Deleted', 'toast.restored': 'Backup restored', 'toast.copied': 'Copied',
+      'empty.docs': 'Nothing here yet. Paste a paper above to begin.',
+      'empty.cases': 'No eCourts data yet. Paste the case status text above.',
+      'ask.help': 'Try: rent agreement Sharma · notices last month · D1 · ecourts · next hearing · stats',
+    },
+    hi: {
+      'top.sub': 'ऑफ़लाइन संस्करण — सर्वर की ज़रूरत नहीं',
+      'tab.docs': 'दस्तावेज़', 'tab.courts': 'ई-कोर्ट', 'tab.more': 'बैकअप और मदद',
+      'add.title': 'दस्तावेज़ जोड़ें',
+      'add.note': 'किराया अनुबंध, नोटिस, आदेश, शपथ पत्र का पाठ चिपकाएँ — अंग्रेज़ी, हिंदी या उर्दू। पढ़ा इसी फ़ोन पर जाता है, कहीं अपलोड नहीं होता।',
+      'add.ph': 'यहाँ पाठ चिपकाएँ…', 'add.file': '.txt फ़ाइल चुनें',
+      'add.name': 'फ़ाइल का नाम (वैकल्पिक)', 'add.save': 'पढ़ें और सहेजें',
+      'search.ph': 'पूछें: किराया अनुबंध शर्मा, पिछले महीने के नोटिस',
+      'search.go': 'पूछें',
+      'ec.title': 'ई-कोर्ट स्मृति',
+      'ec.note': 'ई-कोर्ट केस स्टेटस का पाठ एक बार चिपकाएँ। हर CNR, न्यायालय, चरण और अगली सुनवाई की तारीख इसी फ़ोन पर हमेशा रहेगी।',
+      'ec.ph': 'यहाँ ई-कोर्ट केस स्टेटस पाठ चिपकाएँ…', 'ec.file': '.txt फ़ाइल चुनें',
+      'ec.save': 'इन केसों को याद रखें', 'ec.search': 'CNR संख्या, पक्षकार का नाम, या “अगली सुनवाई”',
+      'backup.title': 'बैकअप',
+      'backup.note': 'इस फ़ोन का सारा डेटा एक फ़ाइल में — रखें या दूसरे फ़ोन पर ले जाएँ।',
+      'backup.export': 'बैकअप डाउनलोड करें', 'backup.import': 'बैकअप से बहाल करें',
+      'backup.wipe': 'इस फ़ोन का सारा डेटा मिटाएँ',
+      'help.title': 'यह क्या कर सकता है',
+      'help.one': 'अंग्रेज़ी, हिंदी, उर्दू दस्तावेज़ पढ़ें: प्रकार, दिनांक, पक्षकार व भूमिका, राशि, न्यायालय, वाद संख्या और धाराएँ।',
+      'help.two': 'तीनों भाषाओं में खोजें — पक्षकार, प्रकार, महीना या वर्ष से।',
+      'help.three': 'ई-कोर्ट केस स्टेटस हमेशा के लिए रखें: ecourts, next hearing, या CNR संख्या।',
+      'help.four': 'कोई सर्वर, खाता या अपलोड नहीं। PDF और Word के लिए होस्टेड संस्करण चाहिए — यहाँ पाठ चिपकाएँ या .txt दें।',
+      'help.ios': 'सुझाव: Safari में Share → Add to Home Screen से इसे ऐप की तरह रखें।',
+      'foot.line': 'पूरी तरह इसी डिवाइस पर चलता है।',
+      'doc.delete': 'यह दस्तावेज़ हटाएँ',
+      'toast.saved': 'पढ़ा और सहेजा गया', 'toast.full': 'फ़ोन की जगह भर गई — बैकअप लें, फिर पुराने दस्तावेज़ हटाएँ।',
+      'toast.deleted': 'हटा दिया', 'toast.restored': 'बैकअप बहाल हुआ', 'toast.copied': 'कॉपी हो गया',
+      'empty.docs': 'अभी कुछ नहीं है। ऊपर पाठ चिपकाकर शुरू करें।',
+      'empty.cases': 'अभी ई-कोर्ट डेटा नहीं है। ऊपर केस स्टेटस पाठ चिपकाएँ।',
+      'ask.help': 'आज़माएँ: किराया अनुबंध शर्मा · पिछले महीने के नोटिस · ecourts · next hearing · stats',
+    },
+    ur: {
+      'top.sub': 'آف لائن نسخہ — سرور کی ضرورت نہیں',
+      'tab.docs': 'دستاویزات', 'tab.courts': 'ای-کورٹ', 'tab.more': 'بیک اپ اور مدد',
+      'add.title': 'دستاویز شامل کریں',
+      'add.note': 'کرایہ نامہ، نوٹس، حکم یا حلف نامے کا متن چسپاں کریں — انگریزی، ہندی یا اردو۔ پڑھائی اسی فون پر ہوتی ہے، کہیں اپ لوڈ نہیں ہوتا۔',
+      'add.ph': 'یہاں متن چسپاں کریں…', 'add.file': '.txt فائل چنیں',
+      'add.name': 'فائل کا نام (اختیاری)', 'add.save': 'پڑھیں اور محفوظ کریں',
+      'search.ph': 'پوچھیں: کرایہ نامہ شرما، گزشتہ ماہ کے نوٹس',
+      'search.go': 'پوچھیں',
+      'ec.title': 'ای-کورٹ یادداشت',
+      'ec.note': 'ای-کورٹ کیس اسٹیٹس کا متن ایک بار چسپاں کریں۔ ہر CNR، عدالت، مرحلہ اور اگلی سماعت کی تاریخ اسی فون پر محفوظ رہے گی۔',
+      'ec.ph': 'یہاں ای-کورٹ کیس اسٹیٹس کا متن چسپاں کریں…', 'ec.file': '.txt فائل چنیں',
+      'ec.save': 'یہ کیسز یاد رکھیں', 'ec.search': 'CNR نمبر، فریق کا نام، یا “اگلی سماعت”',
+      'backup.title': 'بیک اپ',
+      'backup.note': 'اس فون کا سارا ڈیٹا ایک فائل میں — رکھیں یا دوسرے فون پر لے جائیں۔',
+      'backup.export': 'بیک اپ ڈاؤن لوڈ کریں', 'backup.import': 'بیک اپ سے بحال کریں',
+      'backup.wipe': 'اس فون کا سارا ڈیٹا مٹا دیں',
+      'help.title': 'یہ کیا کر سکتا ہے',
+      'help.one': 'انگریزی، ہندی اور اردو دستاویزات پڑھیں: قسم، تاریخ، فریق اور کردار، رقوم، عدالت، مقدمہ نمبر اور دفعات۔',
+      'help.two': 'تینوں زبانوں میں تلاش کریں — فریق، قسم، مہینہ یا سال سے۔',
+      'help.three': 'ای-کورٹ کیس اسٹیٹس ہمیشہ رکھیں: ecourts، next hearing، یا CNR نمبر۔',
+      'help.four': 'کوئی سرور، اکاؤنٹ یا اپ لوڈ نہیں۔ PDF اور Word کے لیے ہوسٹڈ نسخہ درکار ہے — یہاں متن چسپاں کریں یا .txt دیں۔',
+      'help.ios': 'مشورہ: Safari میں Share → Add to Home Screen سے اسے ایپ کی طرح رکھیں۔',
+      'foot.line': 'مکمل طور پر اسی ڈیوائس پر چلتا ہے۔',
+      'doc.delete': 'یہ دستاویز حذف کریں',
+      'toast.saved': 'پڑھا اور محفوظ ہوا', 'toast.full': 'فون کی جگہ بھر گئی — بیک اپ لیں، پھر پرانی دستاویزات حذف کریں۔',
+      'toast.deleted': 'حذف ہو گیا', 'toast.restored': 'بیک اپ بحال ہوا', 'toast.copied': 'کاپی ہو گیا',
+      'empty.docs': 'ابھی کچھ نہیں۔ اوپر متن چسپاں کر کے شروع کریں۔',
+      'empty.cases': 'ابھی ای-کورٹ ڈیٹا نہیں۔ اوپر کیس اسٹیٹس متن چسپاں کریں۔',
+      'ask.help': 'آزمائیں: کرایہ نامہ شرما · گزشتہ ماہ کے نوٹس · ecourts · next hearing · stats',
+    },
+  };
+
+  var lang = 'en';
+
+  function t(key) {
+    return (DICT[lang] && DICT[lang][key]) || DICT.en[key] || key;
+  }
+
+  function applyLang(next) {
+    lang = DICT[next] ? next : 'en';
+    try { window.localStorage.setItem('xdm.offline.lang', lang); } catch (err) { /* ignore */ }
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr';
+    $$('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      if (DICT[lang][key] || DICT.en[key]) el.innerHTML = t(key);
+    });
+    $$('[data-i18n-ph]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n-ph');
+      if (DICT[lang][key] || DICT.en[key]) el.setAttribute('placeholder', t(key));
+    });
+    $$('#lang button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-lang') === lang); });
+    renderStats();
+    renderList();
+    renderCases();
+  }
+
+  /* ── helpers ─────────────────────────────────────────────────── */
+
+  function esc(value) {
+    return String(value === undefined || value === null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function toast(message) {
+    var el = $('#toast');
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(function () { el.classList.remove('show'); }, 2400);
+  }
+
+  function money(value) {
+    if (typeof value !== 'number' || !isFinite(value)) return '';
+    return '₹ ' + value.toLocaleString('en-IN');
+  }
+
+  function dateLabel(iso, long) {
+    if (!iso) return '';
+    try { return ENGINE.formatDate(iso, { long: !!long }); } catch (err) { return iso; }
+  }
+
+  function daysUntil(iso) {
+    if (!iso) return null;
+    try { return -ENGINE.daysBetween(ENGINE.toIso(new Date()), iso); } catch (err) { return null; }
+  }
+
+  function nextId(list, prefix) {
+    var max = 0;
+    list.forEach(function (item) {
+      var m = new RegExp('^' + prefix + '(\\d+)$').exec(item.id || '');
+      if (m) max = Math.max(max, Number(m[1]));
+    });
+    return prefix + (max + 1);
+  }
+
+  function download(filename, text, mime) {
+    var blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
+  }
+
+  function readFileText(file, cb) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var text = String(reader.result || '').replace(/^\uFEFF/, '');
+      cb(text);
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  /* ── analysis ────────────────────────────────────────────────── */
+
+  function analyse(text, filename) {
+    var source = String(text || '').trim();
+    if (!source) return null;
+    return ENGINE.analyzeDocument({ text: source, filename: filename || 'pasted text' });
+  }
+
+  function docRecord(result, filename, rawText) {
+    var s = loadStore();
+    var doc = {
+      id: nextId(s.docs, 'D'),
+      created_at: new Date().toISOString(),
+      filename: filename || '',
+      title: result.title,
+      doc_type: result.docType,
+      type_label: result.typeLabel,
+      doc_date: result.docDate || null,
+      language: result.language || 'en',
+      parties: result.parties || [],
+      amounts: result.amounts || [],
+      court: result.court || null,
+      case_number: result.caseNumber || null,
+      statutes: result.statutes || [],
+      clauses: result.clauses || [],
+      key_points: result.keyPoints || [],
+      summary: result.summary || '',
+      tags: result.tags || [],
+      text: String(rawText || '').slice(0, 150000),
+    };
+    return doc;
+  }
+
+  /** Create the record and file it in one step, so ids never collide. */
+  function saveDoc(result, filename, rawText) {
+    var s = loadStore();
+    var doc = docRecord(result, filename, rawText);
+    doc.id = nextId(s.docs, 'D');
+    s.docs.push(doc);
+    saveStore();
+    return doc;
+  }
+
+  function searchDocs(query) {
+    var s = loadStore();
+    var plan;
+    try { plan = ENGINE.parseQuery(query, { matters: [] }); } catch (err) { plan = { terms: ENGINE.queryTokens(query), typeIds: [], dateRange: null }; }
+    if (plan.docId) {
+      var direct = s.docs.filter(function (d) { return d.id === plan.docId; });
+      if (direct.length) return { docs: direct, plan: plan };
+    }
+    var terms = (plan.terms && plan.terms.length ? plan.terms : ENGINE.queryTokens(query)).map(function (w) {
+      return ENGINE.normalize(w);
+    }).filter(Boolean);
+
+    var scored = s.docs.map(function (doc) {
+      var hay = ENGINE.normalize([
+        doc.title, doc.type_label, doc.filename, doc.court, doc.case_number,
+        (doc.parties || []).map(function (p) { return p.name + ' ' + (p.role || ''); }).join(' '),
+        doc.summary, (doc.tags || []).join(' '), doc.text,
+      ].join(' '));
+      var score = 0;
+      terms.forEach(function (term) {
+        if (term.length < 2) return;
+        if (hay.indexOf(term) >= 0) score += 2;
+        else if (hay.indexOf(term.slice(0, Math.max(3, term.length - 2))) >= 0) score += 0.8;
+      });
+      if (plan.typeIds && plan.typeIds.length && plan.typeIds.indexOf(doc.doc_type) >= 0) score += 3;
+      if (!terms.length && !(plan.typeIds || []).length) score += 0.5;
+      return { doc: doc, score: score };
+    }).filter(function (row) { return row.score > 0; });
+
+    scored.sort(function (a, b) { return b.score - a.score || String(b.doc.created_at).localeCompare(String(a.doc.created_at)); });
+    var docs = scored.map(function (r) { return r.doc; });
+    if (plan.dateRange) {
+      var inRange = docs.filter(function (d) { return d.doc_date && d.doc_date >= plan.dateRange.from && d.doc_date <= plan.dateRange.to; });
+      if (inRange.length) docs = inRange;
+    }
+    if (plan.typeIds && plan.typeIds.length && docs.length) {
+      var typed = docs.filter(function (d) { return plan.typeIds.indexOf(d.doc_type) >= 0; });
+      if (typed.length) docs = typed.concat(docs.filter(function (d) { return typed.indexOf(d) < 0; }));
+    }
+    return { docs: docs.slice(0, 40), plan: plan };
+  }
+
+  /* ── rendering ───────────────────────────────────────────────── */
+
+  function renderStats() {
+    var s = loadStore();
+    var upcoming = s.cases.filter(function (c) { return c.next_hearing; }).length;
+    var html = ''
+      + '<span class="pill"><b>' + s.docs.length + '</b> ' + esc(lang === 'en' ? 'papers' : lang === 'hi' ? 'दस्तावेज़' : 'دستاویزات') + '</span>'
+      + '<span class="pill"><b>' + s.cases.length + '</b> ' + esc(lang === 'en' ? 'eCourts cases' : lang === 'hi' ? 'ई-कोर्ट केस' : 'ای-کورٹ کیسز') + '</span>'
+      + (upcoming ? '<span class="pill"><b>' + upcoming + '</b> ' + esc(lang === 'en' ? 'with dates' : lang === 'hi' ? 'तारीखों सहित' : 'تاریخوں کے ساتھ') + '</span>' : '');
+    $('#stats').innerHTML = html;
+    $('#storage-note').textContent = memoryOnly ? t('toast.full') : '';
+  }
+
+  function chips(doc) {
+    var out = '';
+    if (doc.type_label) out += '<span class="chip">' + esc(doc.type_label) + '</span>';
+    if (doc.doc_date) out += '<span class="chip muted">' + esc(dateLabel(doc.doc_date)) + '</span>';
+    if (doc.language && doc.language !== 'en') out += '<span class="chip warn">' + esc(doc.language === 'hi' ? 'हिंदी' : doc.language === 'ur' ? 'اردو' : 'mixed') + '</span>';
+    return out ? '<div class="chips">' + out + '</div>' : '';
+  }
+
+  function renderList() {
+    var box = $('#results');
+    if (!box) return;
+    var s = loadStore();
+    var docs = s.docs.slice().sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+    if (!docs.length) { box.innerHTML = '<p class="muted small">' + esc(t('empty.docs')) + '</p>'; return; }
+    box.innerHTML = docs.slice(0, 60).map(function (d) {
+      return '<div class="item" data-open="' + esc(d.id) + '">'
+        + '<b>' + esc(d.id) + ' · ' + esc(d.title) + '</b>'
+        + '<small>' + esc([dateLabel(d.doc_date), d.type_label, (d.parties || [])[0] ? d.parties[0].name : ''].filter(Boolean).join(' · ')) + '</small>'
+        + '</div>';
+    }).join('');
+    $$('#results .item').forEach(function (el) {
+      el.addEventListener('click', function () { showDoc(el.getAttribute('data-open')); });
+    });
+  }
+
+  function renderResults(docs, plan) {
+    var box = $('#results');
+    var answer = $('#answer');
+    if (!docs.length) {
+      box.innerHTML = '<p class="muted small">' + esc(lang === 'en' ? 'Nothing matched.' : lang === 'hi' ? 'कुछ नहीं मिला।' : 'کچھ نہیں ملا۔') + '</p>';
+      return;
+    }
+    answer.textContent = (lang === 'en' ? docs.length + ' match' + (docs.length > 1 ? 'es' : '') : lang === 'hi' ? docs.length + ' परिणाम' : docs.length + ' نتائج')
+      + (plan && plan.dateRange ? ' · ' + plan.dateRange.from + ' → ' + plan.dateRange.to : '');
+    box.innerHTML = docs.map(function (d) {
+      return '<div class="item" data-open="' + esc(d.id) + '">'
+        + '<b>' + esc(d.id) + ' · ' + esc(d.title) + '</b>'
+        + '<small>' + esc([dateLabel(d.doc_date), d.type_label].filter(Boolean).join(' · ')) + '</small>'
+        + '</div>';
+    }).join('');
+    $$('#results .item').forEach(function (el) {
+      el.addEventListener('click', function () { showDoc(el.getAttribute('data-open')); });
+    });
+  }
+
+  function showDoc(id) {
+    var s = loadStore();
+    var doc = s.docs.filter(function (d) { return d.id === id; })[0];
+    var box = $('#card');
+    if (!doc) { box.classList.add('hidden'); return; }
+    var facts = '';
+    if (doc.doc_date) facts += '<dt>' + esc(lang === 'en' ? 'Date' : lang === 'hi' ? 'दिनांक' : 'تاریخ') + '</dt><dd>' + esc(dateLabel(doc.doc_date, true)) + '</dd>';
+    if (doc.court) facts += '<dt>Court</dt><dd>' + esc(doc.court) + '</dd>';
+    if (doc.case_number) facts += '<dt>Case</dt><dd>' + esc(doc.case_number) + '</dd>';
+    if (doc.filename) facts += '<dt>File</dt><dd>' + esc(doc.filename) + '</dd>';
+    if (doc.language) facts += '<dt>Language</dt><dd>' + esc(doc.language) + '</dd>';
+
+    var parties = (doc.parties || []).map(function (p) {
+      return '<div>' + esc(p.name) + (p.role ? ' — <span class="chip">' + esc(p.role) + '</span>' : '') + '</div>';
+    }).join('');
+
+    var amounts = (doc.amounts || []).map(function (a) {
+      return '<div><span>' + esc(a.label || 'Amount') + '</span><b>' + esc(money(a.value)) + '</b></div>';
+    }).join('');
+
+    var statutes = (doc.statutes || []).map(function (st) {
+      return '<span class="chip muted">' + esc([st.section, st.act].filter(Boolean).join(' · ')) + '</span>';
+    }).join(' ');
+
+    var clauses = (doc.clauses || []).slice(0, 8).map(function (c) {
+      return '<div class="clause"><b>' + esc(c.label || c.heading || 'clause') + '</b>' + esc(c.text) + '</div>';
+    }).join('');
+
+    var keys = (doc.key_points || []).slice(0, 6).map(function (k) {
+      return '<li>' + esc(k) + '</li>';
+    }).join('');
+
+    box.innerHTML = ''
+      + '<div class="row" style="justify-content:space-between;align-items:flex-start">'
+      + '<h2>' + esc(doc.title) + '</h2>'
+      + '<button class="btn ghost" id="close-card">✕</button></div>'
+      + chips(doc)
+      + (facts ? '<dl class="facts">' + facts + '</dl>' : '')
+      + (parties ? '<h3>' + esc(lang === 'en' ? 'Parties' : lang === 'hi' ? 'पक्षकार' : 'فریقین') + '</h3>' + parties : '')
+      + (amounts ? '<h3>' + esc(lang === 'en' ? 'Amounts' : lang === 'hi' ? 'राशि' : 'رقوم') + '</h3><div class="amounts">' + amounts + '</div>' : '')
+      + (statutes ? '<h3>Sections</h3><div class="chips">' + statutes + '</div>' : '')
+      + (clauses ? '<h3>' + esc(lang === 'en' ? 'Clauses' : lang === 'hi' ? 'शर्तें' : 'شرائط') + '</h3>' + clauses : '')
+      + (keys ? '<h3>' + esc(lang === 'en' ? 'Key points' : lang === 'hi' ? 'मुख्य बातें' : 'اہم نکات') + '</h3><ul class="help">' + keys + '</ul>' : '')
+      + (doc.summary ? '<h3>Summary</h3><p class="small">' + esc(doc.summary) + '</p>' : '')
+      + '<h3>Text</h3><pre class="raw">' + esc(doc.text || '') + '</pre>'
+      + '<div class="row"><button class="btn" id="dl-txt">Download .txt</button>'
+      + '<button class="btn ghost" id="dl-json">Download .json</button>'
+      + '<button class="btn danger" id="del">' + esc(t('doc.delete')) + '</button></div>';
+    box.classList.remove('hidden');
+
+    $('#close-card').addEventListener('click', function () { box.classList.add('hidden'); });
+    $('#dl-txt').addEventListener('click', function () {
+      download((doc.id || 'document') + '.txt', doc.text || '', 'text/plain;charset=utf-8');
+    });
+    $('#dl-json').addEventListener('click', function () {
+      download((doc.id || 'document') + '.json', JSON.stringify(doc, null, 2), 'application/json');
+    });
+    $('#del').addEventListener('click', function () {
+      if (!window.confirm('Delete ' + doc.id + '?')) return;
+      var s2 = loadStore();
+      s2.docs = s2.docs.filter(function (d) { return d.id !== doc.id; });
+      saveStore();
+      box.classList.add('hidden');
+      renderStats();
+      renderList();
+      toast(t('toast.deleted'));
+    });
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ── eCourts ─────────────────────────────────────────────────── */
+
+  function caseCard(c) {
+    var bits = [];
+    if (c.cnr) bits.push('CNR ' + c.cnr);
+    if (c.case_number) bits.push('Case ' + c.case_number);
+    if (c.court) bits.push(c.court);
+    var lines = ['<b>' + esc(c.title || c.case_number || c.cnr) + '</b>'];
+    if (bits.length) lines.push('<small>' + esc(bits.join(' · ')) + '</small>');
+    var status = [c.status, c.stage ? 'stage: ' + c.stage : null].filter(Boolean).join(' · ');
+    if (status) lines.push('<small>' + esc(status) + '</small>');
+    if (c.next_hearing) {
+      var days = daysUntil(c.next_hearing);
+      var when = days === null ? '' : days === 0 ? '(today)' : days > 0 ? '(in ' + days + ' days)' : '(' + (-days) + ' days ago)';
+      lines.push('<small>📅 Next hearing: <b>' + esc(dateLabel(c.next_hearing, true)) + '</b> ' + esc(when) + '</small>');
+    }
+    if (c.filing_date) lines.push('<small>Filed: ' + esc(dateLabel(c.filing_date, true)) + '</small>');
+    if (c.acts) lines.push('<small>' + esc(c.acts) + '</small>');
+    return '<div class="item">' + lines.join('') + '</div>';
+  }
+
+  function renderCases(filterText) {
+    var box = $('#ec-list');
+    if (!box) return;
+    var s = loadStore();
+    var cases = s.cases.slice();
+    var needle = String(filterText || '').trim();
+    if (needle) {
+      var n = ENGINE.normalize(needle);
+      cases = cases.filter(function (c) {
+        return ENGINE.normalize([c.cnr, c.case_number, c.title, c.court, c.petitioner, c.respondent, c.status, c.stage, c.acts].filter(Boolean).join(' ')).indexOf(n) >= 0;
+      });
+    }
+    cases.sort(function (a, b) {
+      if (a.next_hearing && b.next_hearing) return a.next_hearing.localeCompare(b.next_hearing);
+      if (a.next_hearing) return -1;
+      if (b.next_hearing) return 1;
+      return 0;
+    });
+    if (!cases.length) {
+      box.innerHTML = '<p class="muted small">' + esc(needle ? 'Nothing matched.' : t('empty.cases')) + '</p>';
+      return;
+    }
+    box.innerHTML = cases.slice(0, 40).map(caseCard).join('');
+  }
+
+  function saveCases(text) {
+    var records = ENGINE.parseEcourtsText(text);
+    if (!records.length) {
+      $('#ec-hint').textContent = lang === 'en'
+        ? 'No CNR or case number found in that text.'
+        : lang === 'hi' ? 'उस पाठ में कोई CNR या वाद संख्या नहीं मिली।'
+        : 'اس متن میں کوئی CNR یا مقدمہ نمبر نہیں ملا۔';
+      return 0;
+    }
+    var s = loadStore();
+    var added = 0;
+    var updated = 0;
+    records.forEach(function (r) {
+      var key = r.cnr || ENGINE.normalize((r.case_number || '') + '|' + (r.title || ''));
+      var existing = s.cases.filter(function (c) {
+        return (c.cnr && c.cnr === r.cnr) || (!c.cnr && c.key === key);
+      })[0];
+      if (existing) {
+        Object.keys(r).forEach(function (k) { existing[k] = r[k]; });
+        existing.key = key;
+        updated += 1;
+      } else {
+        r.key = key;
+        r.id = nextId(s.cases, 'E');
+        r.remembered_at = new Date().toISOString();
+        s.cases.push(r);
+        added += 1;
+      }
+    });
+    saveStore();
+    renderStats();
+    renderCases('');
+    $('#ec-hint').textContent = added + ' new · ' + updated + ' updated';
+    toast((added ? added + ' remembered' : 'Updated ' + updated));
+    return added + updated;
+  }
+
+  /* ── intents ─────────────────────────────────────────────────── */
+
+  function answerQuery(text) {
+    var q = String(text || '').trim();
+    if (!q) return;
+    var lower = q.toLowerCase();
+    var s = loadStore();
+
+    if (/^(?:help|commands|madad|मदद|مدد)\b/.test(lower)) {
+      $('#results').innerHTML = '<p class="small">' + esc(t('ask.help')) + '</p>';
+      return;
+    }
+    if (/^(?:stats?|library|how many|kitne|कितने|कुल)\b/.test(lower)) {
+      renderList();
+      $('#answer').textContent = s.docs.length + ' documents · ' + s.cases.length + ' eCourts cases';
+      return;
+    }
+    if (/^(?:e-?courts?|case status|court status|कोर्ट स्टेटस|ای-کورٹ|کیس اسٹیٹس)\s*$/.test(lower)) {
+      switchTab('courts');
+      renderCases('');
+      return;
+    }
+    if (/^(?:next hearing|upcoming hearings?|hearing dates?|अगली सुनवाई|اگلی سماعت)\s*$/.test(lower)) {
+      switchTab('courts');
+      renderCases('');
+      return;
+    }
+    var cnr = /\b([A-Z]{2}[A-Z0-9]{2}\d{12,16})\b/i.exec(q);
+    if (cnr) {
+      switchTab('courts');
+      renderCases(cnr[1]);
+      return;
+    }
+    if (/^ecourts?\s+(.+)$/i.test(q)) {
+      switchTab('courts');
+      renderCases(q.replace(/^ecourts?\s+/i, ''));
+      return;
+    }
+    var result = searchDocs(q);
+    switchTab('docs');
+    renderResults(result.docs, result.plan);
+    if (result.docs.length === 1) showDoc(result.docs[0].id);
+  }
+
+  /* ── tabs / wiring ───────────────────────────────────────────── */
+
+  function switchTab(name) {
+    $$('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === name); });
+    $$('.pane').forEach(function (p) { p.classList.toggle('on', p.id === 'pane-' + name); });
+  }
+
+  function init() {
+    try { var saved = window.localStorage.getItem('xdm.offline.lang'); if (saved) lang = saved; } catch (err) { /* ignore */ }
+
+    $$('#lang button').forEach(function (btn) {
+      btn.addEventListener('click', function () { applyLang(btn.getAttribute('data-lang')); });
+    });
+    $$('.tab').forEach(function (btn) {
+      btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
+    });
+
+    loadStore();
+    applyLang(lang);
+    renderStats();
+    renderList();
+    renderCases('');
+    $('#version').textContent = 'v1.0';
+
+    $('#file').addEventListener('change', function (event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      readFileText(file, function (text) {
+        $('#paste').value = text.slice(0, 200000);
+        $('#name').value = file.name;
+        $('#add-hint').textContent = file.name + ' · ' + text.length.toLocaleString('en-IN') + ' characters';
+      });
+      event.target.value = '';
+    });
+
+    $('#save').addEventListener('click', function () {
+      var text = $('#paste').value;
+      var name = $('#name').value.trim();
+      var result = analyse(text, name || 'pasted text');
+      if (!result) { toast(lang === 'en' ? 'Paste some text first' : lang === 'hi' ? 'पहले पाठ चिपकाएँ' : 'پہلے متن چسپاں کریں'); return; }
+      var doc = saveDoc(result, name, text);
+      $('#paste').value = '';
+      $('#name').value = '';
+      $('#add-hint').textContent = '';
+      renderStats();
+      renderList();
+      showDoc(doc.id);
+      toast(doc.id + ' · ' + t('toast.saved'));
+    });
+
+    $('#ask').addEventListener('click', function () { answerQuery($('#q').value); });
+    $('#q').addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') { event.preventDefault(); answerQuery($('#q').value); }
+    });
+
+    $('#ec-file').addEventListener('change', function (event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      readFileText(file, function (text) {
+        $('#ec-paste').value = text.slice(0, 400000);
+        $('#ec-hint').textContent = file.name + ' · ' + text.length.toLocaleString('en-IN') + ' characters';
+      });
+      event.target.value = '';
+    });
+
+    $('#ec-save').addEventListener('click', function () {
+      var text = $('#ec-paste').value;
+      if (!String(text).trim()) { toast(lang === 'en' ? 'Paste the eCourts text first' : 'पहले ई-कोर्ट पाठ चिपकाएँ'); return; }
+      saveCases(text);
+      $('#ec-paste').value = '';
+    });
+
+    $('#ec-go').addEventListener('click', function () {
+      var value = $('#ec-q').value.trim();
+      if (/^(?:next hearing|अगली सुनवाई|اگلی سماعت)$/i.test(value)) {
+        var s = loadStore();
+        var today = ENGINE.toIso(new Date());
+        var upcoming = s.cases.filter(function (c) { return c.next_hearing && c.next_hearing >= today; })
+          .sort(function (a, b) { return a.next_hearing.localeCompare(b.next_hearing); });
+        $('#ec-list').innerHTML = upcoming.length ? upcoming.map(caseCard).join('') : '<p class="muted small">No upcoming hearings.</p>';
+        return;
+      }
+      renderCases(value);
+    });
+    $('#ec-q').addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') { event.preventDefault(); $('#ec-go').click(); }
+    });
+
+    $('#export').addEventListener('click', function () {
+      var s = loadStore();
+      var stamp = new Date().toISOString().slice(0, 10);
+      download('xdm-backup-' + stamp + '.json', JSON.stringify(s, null, 2), 'application/json');
+    });
+
+    $('#import').addEventListener('change', function (event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file) return;
+      readFileText(file, function (text) {
+        try {
+          var parsed = JSON.parse(text);
+          if (!Array.isArray(parsed.docs) || !Array.isArray(parsed.cases)) throw new Error('bad file');
+          store = { version: 1, docs: parsed.docs, cases: parsed.cases };
+          saveStore();
+          renderStats();
+          renderList();
+          renderCases('');
+          toast(t('toast.restored'));
+        } catch (err) {
+          toast('That file is not an X Document Manager backup');
+        }
+      });
+      event.target.value = '';
+    });
+
+    $('#wipe').addEventListener('click', function () {
+      if (!window.confirm('Delete every document and eCourts case on this phone?')) return;
+      store = { version: 1, docs: [], cases: [] };
+      saveStore();
+      $('#card').classList.add('hidden');
+      renderStats();
+      renderList();
+      renderCases('');
+    });
+
+    if (memoryOnly) {
+      var banner = document.createElement('div');
+      banner.className = 'warnbox';
+      banner.textContent = t('toast.full');
+      $('#pane-docs').prepend(banner);
+    }
+  }
+
+  // Small hook so the build can be smoke-tested without a browser.
+  window.__XDM = {
+    analyse: analyse,
+    docRecord: docRecord,
+    saveDoc: saveDoc,
+    searchDocs: searchDocs,
+    saveCases: saveCases,
+    loadStore: loadStore,
+    saveStore: saveStore,
+    answerQuery: answerQuery,
+    render: function () { renderStats(); renderList(); renderCases(''); },
+    lang: function (next) { applyLang(next); },
+    memoryOnly: function () { return memoryOnly; },
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+</body>
+</html>

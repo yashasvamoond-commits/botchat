@@ -14,7 +14,8 @@
     "seed": "node --no-warnings scripts/seed-demo.js",
     "test": "node --no-warnings --test",
     "sim": "node --no-warnings scripts/chat-cli.js",
-    "ecourts": "node --no-warnings scripts/import-ecourts.js"
+    "ecourts": "node --no-warnings scripts/import-ecourts.js",
+    "build:offline": "node --no-warnings scripts/build-offline.js"
   },
   "dependencies": {
     "archiver": "^7.0.1",

@@ -932,6 +932,14 @@ function renderSettings() {
       </div>
     </div>
     <div class="card">
+      <h3>📲 Offline app for your phone</h3>
+      <p class="small muted">One HTML file that runs the whole reader — English, Hindi, Urdu and the eCourts memory — with no server at all. Download it once, open it in Safari, then Share → Add to Home Screen.</p>
+      <div class="doc-actions">
+        <a class="btn primary small" href="/download" download>⬇︎ Download the offline app</a>
+        <a class="btn ghost small" href="/offline" target="_blank" rel="noopener">Open it here</a>
+      </div>
+    </div>
+    <div class="card">
       <h3>⚖️ eCourts memory</h3>
       <div id="ecourts-box"><p class="small muted">Loading remembered cases…</p></div>
       <p class="small muted">Send the eCourts <b>Case Status</b> page saved as a <code>.txt</code> file once — in this chat or on WhatsApp. Every CNR, court, next hearing and stage in it is kept forever. Say <code>ecourts</code> or <code>next hearing</code> to use it.</p>
