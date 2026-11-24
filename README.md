@@ -246,3 +246,27 @@ Then open `https://<your-domain>/?token=<DASHBOARD_TOKEN>` on the iPhone and use
 **Share → Add to Home Screen**. Documents, the SQLite database and the eCourts
 memory all live inside `DATA_DIR`, so they survive redeploys as long as the
 volume is kept. `GET /healthz` answers `{"ok":true}` for uptime checks.
+
+## The offline app — one file, no server
+
+`npm run build:offline` writes **`docs/index.html`** (mirrored to
+`downloads/X-Document-Manager.html`): one self-contained page, ~190 kB, with no
+external scripts, fonts or network calls.
+
+It runs the same engine as the server — Hindi/Urdu/English analysis, search and
+the eCourts memory — entirely in the browser, and stores everything in
+`localStorage` on the device:
+
+| What | Where |
+| --- | --- |
+| Open it hosted | `GET /offline` on this server, or the GitHub raw page |
+| Save it to a phone | `GET /download` (sends `Content-Disposition: attachment`) |
+| Rebuild after engine changes | `npm run build:offline` |
+
+On iOS: open it, then **Share → Add to Home Screen**. Storage is per-origin, so
+the hosted copy remembers more reliably than a `file://` copy — use
+**Backup & help → Download backup** to keep a JSON copy either way.
+
+The page's own tests (`test/offline-bundle.test.js`) evaluate the generated
+scripts against a DOM stub, so a broken bundle fails `npm test` instead of
+failing on the phone.
